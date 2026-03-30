@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ProductOption } from "@/lib/types";
 import { v4 as uuidv4 } from "uuid";
+import { getResultsAuth, setResultsAuth, clearResultsAuth, saveAdminPass, getAdminPass } from "@/lib/cookies";
 
 interface Config {
   title: string;
@@ -20,6 +21,17 @@ export default function AdminPage() {
   const [step, setStep] = useState<AdminStep>("login");
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
+
+  // 当日認証済みならスキップ（保存済みパスワードも復元）
+  useEffect(() => {
+    if (getResultsAuth()) {
+      const saved = getAdminPass();
+      if (saved) setPassword(saved);
+      setStep("dashboard");
+      fetchConfig();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [config, setConfig] = useState<Config | null>(null);
   const [title, setTitle] = useState("");
@@ -51,7 +63,6 @@ export default function AdminPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Validate password via a test PUT request
     const res = await fetch("/api/config", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -59,11 +70,19 @@ export default function AdminPage() {
     });
     if (res.ok) {
       setLoginError("");
+      setResultsAuth();     // 当日有効で認証を保存
+      saveAdminPass(password); // パスワードも保存（設定保存時に使用）
       setStep("dashboard");
       fetchConfig();
     } else {
       setLoginError("パスワードが正しくありません");
     }
+  };
+
+  const handleLogout = () => {
+    clearResultsAuth();
+    setStep("login");
+    setPassword("");
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -169,12 +188,20 @@ export default function AdminPage() {
             <h1 className="text-2xl font-bold gradient-text">管理者ダッシュボード</h1>
           </div>
           {step === "dashboard" && (
-            <button
-              onClick={() => router.push("/")}
-              className="text-slate-400 hover:text-white text-sm transition-colors"
-            >
-              ← 投票ページ
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => router.push("/")}
+                className="text-slate-400 hover:text-white text-sm transition-colors"
+              >
+                ← 投票ページ
+              </button>
+              <button
+                onClick={handleLogout}
+                className="text-slate-600 hover:text-slate-400 text-xs border border-slate-700 hover:border-slate-500 px-2.5 py-1 rounded-lg transition-colors"
+              >
+                ログアウト
+              </button>
+            </div>
           )}
         </div>
 
