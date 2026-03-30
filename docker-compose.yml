@@ -1,0 +1,19 @@
+services:
+  apc-vote:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: apc-vote
+    ports:
+      - "3000:3000"
+    volumes:
+      # 投票データ・設定を永続化
+      - vote-data:/app/data
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    restart: unless-stopped
+
+volumes:
+  vote-data:
+    name: apc-vote-data

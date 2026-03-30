@@ -1,0 +1,21 @@
+# 開発用
+node_modules
+.next
+.git
+.gitignore
+
+# データ（コンテナ内はvolumeで管理）
+data/
+
+# 設定・ログ
+*.log
+npm-debug.log*
+
+# IDE
+.vscode
+.cursor
+*.pem
+
+# OS
+.DS_Store
+Thumbs.db

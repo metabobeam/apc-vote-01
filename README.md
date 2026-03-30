@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# APC Vote — 優秀作品投票システム
 
-## Getting Started
+## 起動方法
 
-First, run the development server:
+### Docker (推奨)
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# ビルド & 起動
+docker compose up -d --build
+
+# ログ確認
+docker compose logs -f
+
+# 停止
+docker compose down
+
+# データを保持したまま停止・再起動
+docker compose restart
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+ブラウザで http://localhost:3000 を開く。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### ローカル開発
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm install
+npm run dev
+```
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## ページ一覧
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| URL | 内容 |
+|-----|------|
+| `/` | 投票ページ |
+| `/admin` | 管理者設定（パスワード: `admin1234`） |
+| `/admin/votes` | 投票内容確認・無効票削除 |
+| `/results` | 投票結果（管理者パスワード必要） |
+| `/announce` | 結果発表（管理者パスワード必要） |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## データ永続化
 
-## Deploy on Vercel
+投票データ・設定は Docker Volume `apc-vote-data` に保存されます。
+コンテナを削除してもデータは保持されます。
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+# データのバックアップ
+docker run --rm -v apc-vote-data:/data -v $(pwd):/backup alpine \
+  tar czf /backup/vote-data-backup.tar.gz /data
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# データ完全削除
+docker compose down -v
+```
