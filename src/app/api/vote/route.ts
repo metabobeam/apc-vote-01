@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
-import { getConfig, saveVote, hasEmployeeVoted } from "@/lib/store";
-import { Vote } from "@/lib/types";
+import { dbGetConfig, dbSaveVote } from "@/lib/db";
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,61 +11,42 @@ export async function POST(request: NextRequest) {
     };
 
     if (!employeeNumber || !selectedProductIds || !Array.isArray(selectedProductIds)) {
-      return NextResponse.json(
-        { error: "社員番号と選択作品は必須です" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "社員番号と選択作品は必須です" }, { status: 400 });
     }
 
-    const config = getConfig();
+    const config = dbGetConfig();
 
     if (!config.isActive) {
       return NextResponse.json({ error: "投票は現在受け付けていません" }, { status: 403 });
     }
-
-    const now = new Date();
-    const deadline = new Date(config.deadline);
-    if (now > deadline) {
+    if (new Date() > new Date(config.deadline)) {
       return NextResponse.json({ error: "投票の締め切りを過ぎています" }, { status: 403 });
     }
 
     const maxSel = config.maxSelections ?? 1;
     if (selectedProductIds.length !== maxSel) {
-      return NextResponse.json(
-        { error: `${maxSel}つの作品を選択してください` },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: `${maxSel}つの作品を選択してください` }, { status: 400 });
     }
-
-    // 全選択IDが有効か確認
     for (const id of selectedProductIds) {
-      const valid = config.options.find((o) => o.id === id);
-      if (!valid) {
+      if (!config.options.find((o) => o.id === id)) {
         return NextResponse.json({ error: "無効な選択肢が含まれています" }, { status: 400 });
       }
     }
-
-    // 重複チェック
-    const unique = new Set(selectedProductIds);
-    if (unique.size !== selectedProductIds.length) {
+    if (new Set(selectedProductIds).size !== selectedProductIds.length) {
       return NextResponse.json({ error: "同じ作品を重複して選択できません" }, { status: 400 });
     }
 
-    if (hasEmployeeVoted(employeeNumber)) {
-      return NextResponse.json(
-        { error: "この社員番号はすでに投票済みです" },
-        { status: 409 }
-      );
-    }
-
-    const vote: Vote = {
+    // トランザクションで重複チェック＋保存（競合状態を防止）
+    const result = dbSaveVote({
       id: uuidv4(),
       employeeNumber,
       selectedProductIds,
       timestamp: new Date().toISOString(),
-    };
+    });
 
-    saveVote(vote);
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: 409 });
+    }
 
     return NextResponse.json({ success: true, message: "投票が完了しました" });
   } catch {

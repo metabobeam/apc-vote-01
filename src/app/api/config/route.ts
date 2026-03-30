@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getConfig, saveConfig } from "@/lib/store";
+import { dbGetConfig, dbSaveConfig } from "@/lib/db";
 import { VoteConfig } from "@/lib/types";
 
 export async function GET() {
   try {
-    const config = getConfig();
-    // パスワードは返さない
+    const config = dbGetConfig();
     const { adminPassword: _, ...publicConfig } = config;
     return NextResponse.json(publicConfig);
   } catch {
@@ -17,19 +16,16 @@ export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
     const { password, ...newConfig } = body;
-
-    const currentConfig = getConfig();
+    const currentConfig = dbGetConfig();
     if (password !== currentConfig.adminPassword) {
       return NextResponse.json({ error: "パスワードが正しくありません" }, { status: 401 });
     }
-
     const updatedConfig: VoteConfig = {
       ...currentConfig,
       ...newConfig,
       adminPassword: currentConfig.adminPassword,
     };
-
-    saveConfig(updatedConfig);
+    dbSaveConfig(updatedConfig);
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "設定の更新に失敗しました" }, { status: 500 });
