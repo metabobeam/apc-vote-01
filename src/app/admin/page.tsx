@@ -12,6 +12,14 @@ interface Config {
   options: ProductOption[];
   isActive: boolean;
   maxSelections: number;
+  judges: string[];
+}
+
+interface JudgeData {
+  judges: string[];
+  candidates: { productId: string; productNumber: string; description: string; count: number }[];
+  judgeVotes: { judgeName: string; selectedProductId: string }[];
+  results: { productId: string; productNumber: string; description: string; judgeVoteCount: number }[];
 }
 
 type AdminStep = "login" | "dashboard";
@@ -40,6 +48,11 @@ export default function AdminPage() {
   const [maxSelections, setMaxSelections] = useState(1);
   const [options, setOptions] = useState<ProductOption[]>([]);
 
+  const [judges, setJudges] = useState<string[]>([]);
+  const [newJudgeName, setNewJudgeName] = useState("");
+  const [judgeData, setJudgeData] = useState<JudgeData | null>(null);
+  const [showWinner, setShowWinner] = useState(false);
+
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState("");
   const [resetting, setResetting] = useState(false);
@@ -59,6 +72,15 @@ export default function AdminPage() {
       .slice(0, 16);
     setDeadline(local);
     setOptions(data.options.map((o) => ({ ...o })));
+    setJudges(data.judges ?? []);
+    fetchJudgeData();
+  };
+
+  const fetchJudgeData = async () => {
+    try {
+      const res = await fetch("/api/judge");
+      if (res.ok) setJudgeData(await res.json());
+    } catch { /* ignore */ }
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -102,6 +124,7 @@ export default function AdminPage() {
           isActive,
           maxSelections,
           options,
+          judges,
         }),
       });
       if (res.ok) {
@@ -138,6 +161,25 @@ export default function AdminPage() {
       }
       return updated;
     }));
+  };
+
+  // 審査員リストを即時保存
+  const saveJudges = async (newJudges: string[]) => {
+    try {
+      const res = await fetch("/api/config", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password, judges: newJudges }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setSaveMsg(`✗ ${data.error ?? "保存に失敗しました"}`);
+        setTimeout(() => setSaveMsg(""), 3000);
+      }
+    } catch {
+      setSaveMsg("✗ 保存に失敗しました");
+      setTimeout(() => setSaveMsg(""), 3000);
+    }
   };
 
   const handleReset = async () => {
@@ -236,6 +278,7 @@ export default function AdminPage() {
 
         {/* Dashboard */}
         {step === "dashboard" && config && (
+          <>
           <form onSubmit={handleSave} className="flex flex-col gap-6">
             {/* Basic Settings */}
             <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
@@ -420,15 +463,185 @@ export default function AdminPage() {
                   🎬 結果発表へ
                 </button>
               </div>
-              <button
-                type="button"
-                onClick={() => router.push("/admin/votes")}
-                className="w-full bg-rose-50 hover:bg-rose-100 border border-rose-200 hover:border-rose-300 text-rose-600 font-medium text-sm py-2.5 rounded-xl transition-all flex items-center justify-center gap-2"
-              >
-                <span>🗳️</span> 投票内容の確認・無効票削除
-              </button>
+              <div className="border-t border-dashed border-gray-200 pt-3 mt-1">
+                <button
+                  type="button"
+                  onClick={() => router.push("/admin/votes")}
+                  className="w-full bg-rose-50 hover:bg-rose-100 border border-rose-200 hover:border-rose-300 text-rose-600 font-medium text-sm py-2.5 rounded-xl transition-all flex items-center justify-center gap-2"
+                >
+                  <span>🗳️</span> 投票内容の確認・無効票削除
+                </button>
+              </div>
             </div>
           </form>
+
+          {/* ────────────── セクション区切り ────────────── */}
+          <div className="mt-10 mb-6 flex items-center gap-4">
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
+            <span className="text-xs font-bold text-gray-400 tracking-widest uppercase px-2 whitespace-nowrap">審査員・優勝決定</span>
+            <div className="flex-1 h-px bg-gradient-to-l from-transparent via-gray-300 to-transparent" />
+          </div>
+
+          {/* ── 審査員管理 ── */}
+          <div className="bg-white border-2 border-indigo-100 rounded-2xl p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-bold text-gray-800">⚖️ 審査員管理</h2>
+              <button
+                type="button"
+                onClick={() => router.push("/judge")}
+                className="text-xs bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-600 px-3 py-1.5 rounded-lg transition-colors"
+              >
+                審査員投票ページ →
+              </button>
+            </div>
+
+            {/* 審査員追加 */}
+            <div className="flex gap-2 mb-4">
+              <input
+                type="text"
+                value={newJudgeName}
+                onChange={(e) => setNewJudgeName(e.target.value)}
+                placeholder="審査員名を入力"
+                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-indigo-400"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const name = newJudgeName.trim();
+                    if (name && !judges.includes(name)) {
+                      const next = [...judges, name];
+                      setJudges(next);
+                      setNewJudgeName("");
+                      saveJudges(next);
+                    }
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const name = newJudgeName.trim();
+                  if (name && !judges.includes(name)) {
+                    const next = [...judges, name];
+                    setJudges(next);
+                    setNewJudgeName("");
+                    saveJudges(next);
+                  }
+                }}
+                className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-lg transition-colors"
+              >
+                追加
+              </button>
+            </div>
+
+            {judges.length > 0 ? (
+              <div className="flex flex-wrap gap-2 mb-4">
+                {judges.map((name) => {
+                  const voted = judgeData?.judgeVotes.some((jv) => jv.judgeName === name);
+                  return (
+                    <span key={name} className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm border ${voted ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-gray-100 border-gray-200 text-gray-700"}`}>
+                      {voted && <span className="text-xs">✓</span>}
+                      {name}
+                      {!voted && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const next = judges.filter((j) => j !== name);
+                            setJudges(next);
+                            saveJudges(next);
+                          }}
+                          className="text-gray-400 hover:text-red-500 ml-0.5 transition-colors"
+                        >×</button>
+                      )}
+                    </span>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-gray-400 text-xs mb-4">審査員が未登録です</p>
+            )}
+
+            <p className="text-xs text-gray-400 mb-3">
+              ※ 審査員の追加・削除は即座に保存されます
+            </p>
+
+            {/* 投票状況 */}
+            {judgeData && judgeData.judgeVotes.length > 0 && (
+              <div className="border-t border-gray-100 pt-4 mt-2">
+                <p className="text-xs font-semibold text-gray-500 mb-2">投票済み審査員</p>
+                <div className="flex flex-col gap-1.5">
+                  {judgeData.judgeVotes.map((jv) => {
+                    const product = judgeData.candidates.find((c) => c.productId === jv.selectedProductId)
+                      ?? judgeData.results.find((r) => r.productId === jv.selectedProductId);
+                    return (
+                      <div key={jv.judgeName} className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">{jv.judgeName}</span>
+                        <span className="text-indigo-600 font-medium text-xs">
+                          {product?.productNumber.replace("\n", " ") ?? jv.selectedProductId}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ── 優勝決定画面 ── */}
+          <div className="mt-4 bg-white border-2 border-amber-100 rounded-2xl p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-bold text-gray-800">🏆 優勝決定</h2>
+              <button
+                type="button"
+                onClick={() => { fetchJudgeData(); setShowWinner(true); }}
+                className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-bold text-sm px-4 py-2 rounded-xl transition-all shadow-md"
+              >
+                結果表示
+              </button>
+            </div>
+
+            {judgeData && (
+              <div className="text-sm text-gray-500">
+                審査員投票数: {judgeData.judgeVotes.length} / {judgeData.judges.length} 名
+              </div>
+            )}
+
+            {showWinner && judgeData && (() => {
+              const maxVotes = Math.max(...judgeData.results.map((r) => r.judgeVoteCount), 0);
+              const winners = maxVotes > 0
+                ? judgeData.results.filter((r) => r.judgeVoteCount === maxVotes)
+                : [];
+              return (
+                <div className="mt-4 bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-300 rounded-2xl p-6 text-center">
+                  {winners.length > 0 ? (
+                    <>
+                      <p className="text-amber-600 text-xs font-bold tracking-widest mb-2">🎉 WINNER</p>
+                      {winners.map((w) => (
+                        <div key={w.productId} className="mb-2">
+                          {w.productNumber.split("\n").map((line, i) => (
+                            <p key={i} className={`font-black text-amber-800 ${i === 0 ? "text-2xl" : "text-base"}`}>{line}</p>
+                          ))}
+                        </div>
+                      ))}
+                      <p className="text-amber-700 text-sm mt-2">審査員票 <span className="text-xl font-black">{maxVotes}</span> 票</p>
+                      {winners.length > 1 && (
+                        <p className="text-amber-500 text-xs mt-1">※ {winners.length}組同点優勝</p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-gray-400 text-sm">まだ審査員の投票がありません</p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setShowWinner(false)}
+                    className="mt-4 text-amber-600 text-xs hover:text-amber-800 transition-colors"
+                  >
+                    閉じる
+                  </button>
+                </div>
+              );
+            })()}
+          </div>
+          </>
         )}
       </div>
     </main>

@@ -11,6 +11,21 @@ export interface VoteConfig {
   isActive: boolean;
   adminPassword: string;
   maxSelections: number; // 1, 2, or 3
+  judges: string[]; // 審査員名リスト
+}
+
+export interface JudgeVoteRecord {
+  id: string;
+  judgeName: string;
+  selectedProductId: string;
+  timestamp: string;
+}
+
+export interface JudgeResult {
+  productId: string;
+  productNumber: string;
+  description: string;
+  judgeVoteCount: number;
 }
 
 export interface Vote {
@@ -45,4 +60,5 @@ export const DEFAULT_CONFIG: VoteConfig = {
   isActive: true,
   adminPassword: "admin1234",
   maxSelections: 1,
+  judges: [],
 };

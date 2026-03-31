@@ -9,6 +9,7 @@ interface PublicConfig {
   title: string;
   deadline: string;
   isActive: boolean;
+  options: { id: string; productNumber: string; description: string }[];
 }
 
 type Phase = "login" | "standby" | "revealing" | "complete";
@@ -33,7 +34,7 @@ export default function AnnouncePage() {
   const [dataLoading, setDataLoading] = useState(false);
 
   const [phase, setPhase] = useState<Phase>("login");
-  // ABC順ソート済み結果
+  // 設定画面と同じ順序でソートした結果
   const [sortedResults, setSortedResults] = useState<VoteResult[]>([]);
   // 各バーの現在幅 (0〜100%)
   const [barWidths, setBarWidths] = useState<number[]>([]);
@@ -42,8 +43,11 @@ export default function AnnouncePage() {
   // 1位・2位の productId（同点対応）
   const [winnerProductIds, setWinnerProductIds] = useState<string[]>([]);
   const [secondProductIds, setSecondProductIds] = useState<string[]>([]);
-  // バー色をランク色に切り替えるフラグ
-  const [revealedRanks, setRevealedRanks] = useState(false);
+  // バー色・アイコン切り替えフラグ（2位先、1位後）
+  const [revealedRank2, setRevealedRank2] = useState(false);
+  const [revealedRank1, setRevealedRank1] = useState(false);
+  // 1位発表時の全画面フラッシュ
+  const [showRank1Flash, setShowRank1Flash] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const animFrameRef = useRef<number | null>(null);
@@ -68,9 +72,10 @@ export default function AnnouncePage() {
       ]);
       setStats(statsData);
       setConfig(configData);
-      // ABC順に並べる
-      const sorted = [...statsData.results].sort((a, b) =>
-        a.productNumber.localeCompare(b.productNumber, "ja")
+      // 設定画面と同じ並び順（config.options の順）でソート
+      const optionOrder = configData.options.map((o) => o.id);
+      const sorted = [...statsData.results].sort(
+        (a, b) => optionOrder.indexOf(a.productId) - optionOrder.indexOf(b.productId)
       );
       setSortedResults(sorted);
       setBarWidths(new Array(sorted.length).fill(0));
@@ -146,10 +151,10 @@ export default function AnnouncePage() {
       const winners = results
         .filter((r) => r.count === mc && r.count > 0)
         .map((r) => r.productId);
-      const rank2Count = Math.max(
-        ...results.filter((r) => r.count < mc).map((r) => r.count),
-        0
-      );
+      // 同点1位が複数いる場合は2位を表示しない
+      const rank2Count = winners.length === 1
+        ? Math.max(...results.filter((r) => r.count < mc).map((r) => r.count), 0)
+        : 0;
       const seconds = rank2Count > 0
         ? results.filter((r) => r.count === rank2Count).map((r) => r.productId)
         : [];
@@ -161,9 +166,18 @@ export default function AnnouncePage() {
     }, REVEAL_DURATION + 300);
     timersRef.current.push(t2);
 
-    // バー色切り替え（完了から少し後に派手演出）
-    const t3 = setTimeout(() => setRevealedRanks(true), REVEAL_DURATION + 800);
+    // 2位を先に発表
+    const t3 = setTimeout(() => setRevealedRank2(true), REVEAL_DURATION + 800);
     timersRef.current.push(t3);
+    // 1位フラッシュ（2位の約2秒後）
+    const t4 = setTimeout(() => {
+      setShowRank1Flash(true);
+      setTimeout(() => setShowRank1Flash(false), 2000);
+    }, REVEAL_DURATION + 2600);
+    timersRef.current.push(t4);
+    // 1位アイコン・バー色（フラッシュ直後）
+    const t5 = setTimeout(() => setRevealedRank1(true), REVEAL_DURATION + 2800);
+    timersRef.current.push(t5);
   };
 
   const reset = () => {
@@ -175,7 +189,9 @@ export default function AnnouncePage() {
     setDisplayCap(0);
     setWinnerProductIds([]);
     setSecondProductIds([]);
-    setRevealedRanks(false);
+    setRevealedRank2(false);
+    setRevealedRank1(false);
+    setShowRank1Flash(false);
     setShowConfetti(false);
     setBarWidths(new Array(sortedResults.length).fill(0));
   };
@@ -255,6 +271,14 @@ export default function AnnouncePage() {
         backgroundPosition: "center",
       }}
     >
+      {/* 1位発表フラッシュ */}
+      {showRank1Flash && (
+        <div
+          className="fixed inset-0 z-[100] pointer-events-none"
+          style={{ backgroundColor: "white", animation: "screenFlash 2s ease-out forwards" }}
+        />
+      )}
+
       {/* 桜吹雪 */}
       {showConfetti && (
         <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
@@ -338,16 +362,16 @@ export default function AnnouncePage() {
                 ? Math.min(result.count, Math.round(displayCap))
                 : result.count;
 
-              // バー色: 完了後にランク色を適用
-              const color = revealedRanks && isRank1 ? BAR_RED1
-                          : revealedRanks && isRank2 ? BAR_RED2
+              // バー色: 2位→1位の順で変化
+              const color = revealedRank1 && isRank1 ? BAR_RED1
+                          : revealedRank2 && isRank2 ? BAR_RED2
                           : BAR_BLUE;
 
-              // ランク発表アニメーション (完了後の1位・2位のみ)
-              const revealAnim = revealedRanks && (isRank1 || isRank2)
+              // ランク発表アニメーション
+              const revealAnim = (revealedRank1 && isRank1) || (revealedRank2 && isRank2)
                 ? "animate-[rankReveal_8s_ease-out_forwards]"
                 : "";
-              const pulseAnim = revealedRanks && (isRank1 || isRank2)
+              const pulseAnim = (revealedRank1 && isRank1) || (revealedRank2 && isRank2)
                 ? "animate-[rankPulse_8s_ease-out_forwards]"
                 : "";
 
@@ -362,11 +386,11 @@ export default function AnnouncePage() {
                         className="font-mono font-black tracking-widest block leading-tight"
                         style={{
                           fontSize: li === 0 ? "clamp(14px,1.4vw,22px)" : "clamp(11px,1vw,16px)",
-                          color: revealedRanks && isRank1 ? "#7f1d1d"
-                               : revealedRanks && isRank2 ? "#7c2d12"
+                          color: revealedRank1 && isRank1 ? "#7f1d1d"
+                               : revealedRank2 && isRank2 ? "#7c2d12"
                                : "#4a1942",
-                          textShadow: revealedRanks && isRank1 ? "0 0 16px rgba(239,68,68,0.7)"
-                                    : revealedRanks && isRank2 ? "0 0 12px rgba(249,115,22,0.6)"
+                          textShadow: revealedRank1 && isRank1 ? "0 0 16px rgba(239,68,68,0.7)"
+                                    : revealedRank2 && isRank2 ? "0 0 12px rgba(249,115,22,0.6)"
                                     : "none",
                         }}
                       >
@@ -382,8 +406,8 @@ export default function AnnouncePage() {
                       style={{
                         height: "clamp(28px,4.5vh,56px)",
                         background: "rgba(255,255,255,0.4)",
-                        border: revealedRanks && isRank1 ? "1px solid rgba(239,68,68,0.4)"
-                               : revealedRanks && isRank2 ? "1px solid rgba(249,115,22,0.3)"
+                        border: revealedRank1 && isRank1 ? "1px solid rgba(239,68,68,0.4)"
+                               : revealedRank2 && isRank2 ? "1px solid rgba(249,115,22,0.3)"
                                : "1px solid rgba(219,112,147,0.25)",
                       }}
                     >
@@ -391,9 +415,9 @@ export default function AnnouncePage() {
                         className={`absolute inset-y-0 left-0 rounded-r-2xl bg-gradient-to-r ${color} ${revealAnim}`}
                         style={{
                           width: `${barW}%`,
-                          boxShadow: revealedRanks && isRank1
+                          boxShadow: revealedRank1 && isRank1
                             ? "0 0 28px rgba(239,68,68,0.7), 0 0 10px rgba(255,255,255,0.4)"
-                            : revealedRanks && isRank2
+                            : revealedRank2 && isRank2
                             ? "0 0 20px rgba(249,115,22,0.6)"
                             : barW > 0 ? "0 0 10px rgba(59,130,246,0.4)" : "none",
                         }}
@@ -416,25 +440,27 @@ export default function AnnouncePage() {
                   >
                     {/* トロフィー（投票数の左側） */}
                     <div className="flex-shrink-0 flex items-center justify-center" style={{ width: "clamp(54px,6.5vw,100px)" }}>
-                      {revealedRanks && isRank1 && (
+                      {/* 2位: 先に登場・控えめ演出 */}
+                      {revealedRank2 && isRank2 && (
                         <span
                           className="inline-block"
                           style={{
                             fontSize: "clamp(54px,6vw,96px)",
-                            animation: "trophyDrop 0.9s cubic-bezier(0.34,1.56,0.64,1) forwards, trophyFloat 2.5s ease-in-out 1.2s infinite",
-                            filter: "drop-shadow(0 0 14px rgba(250,204,21,0.9))",
-                          }}
-                        >🥇</span>
-                      )}
-                      {revealedRanks && isRank2 && (
-                        <span
-                          className="inline-block"
-                          style={{
-                            fontSize: "clamp(54px,6vw,96px)",
-                            animation: "trophyDrop 0.9s 0.15s cubic-bezier(0.34,1.56,0.64,1) both, trophyFloat 2.5s ease-in-out 1.4s infinite",
-                            filter: "drop-shadow(0 0 14px rgba(192,192,192,0.9))",
+                            animation: "rank2Drop 1.1s ease-out forwards, trophyFloat 2.5s ease-in-out 1.3s infinite",
+                            filter: "drop-shadow(0 0 10px rgba(192,192,192,0.8))",
                           }}
                         >🥈</span>
+                      )}
+                      {/* 1位: 後から登場・最大限大げさ */}
+                      {revealedRank1 && isRank1 && (
+                        <span
+                          className="inline-block"
+                          style={{
+                            fontSize: "clamp(54px,6vw,96px)",
+                            animation: "rank1Drop 2.2s ease-out forwards, trophy1Float 1.8s ease-in-out 2.4s infinite",
+                            filter: "drop-shadow(0 0 18px rgba(255,215,0,1))",
+                          }}
+                        >🥇</span>
                       )}
                     </div>
                     {/* 票数・% */}
@@ -443,10 +469,10 @@ export default function AnnouncePage() {
                         className="font-mono font-black"
                         style={{
                           fontSize: "clamp(24px,2.4vw,40px)",
-                          color: revealedRanks && isRank1 ? "#991b1b"
-                               : revealedRanks && isRank2 ? "#9a3412"
-                               : "#be185d",
-                          textShadow: revealedRanks && isRank1 ? "0 0 12px rgba(239,68,68,0.6)" : "none",
+                        color: revealedRank1 && isRank1 ? "#991b1b"
+                             : revealedRank2 && isRank2 ? "#9a3412"
+                             : "#be185d",
+                        textShadow: revealedRank1 && isRank1 ? "0 0 12px rgba(239,68,68,0.6)" : "none",
                         }}
                       >
                         {shownCount}

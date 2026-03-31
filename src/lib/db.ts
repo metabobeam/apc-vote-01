@@ -1,7 +1,7 @@
 import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs";
-import { VoteConfig, DEFAULT_CONFIG } from "./types";
+import { VoteConfig, DEFAULT_CONFIG, JudgeVoteRecord } from "./types";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const DB_PATH = path.join(DATA_DIR, "votes.db");
@@ -42,6 +42,16 @@ function initSchema(db: Database.Database) {
 
     CREATE INDEX IF NOT EXISTS idx_votes_employee
       ON votes (employee_number);
+
+    CREATE TABLE IF NOT EXISTS judge_votes (
+      id           TEXT PRIMARY KEY,
+      judge_name   TEXT NOT NULL,
+      selected_id  TEXT NOT NULL,
+      timestamp    TEXT NOT NULL
+    );
+
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_judge_votes_name
+      ON judge_votes (judge_name);
   `);
 
   // 初期設定が未登録なら挿入
@@ -63,6 +73,7 @@ export function dbGetConfig(): VoteConfig {
   if (!row) return DEFAULT_CONFIG;
   const config = JSON.parse(row.value) as VoteConfig;
   if (config.maxSelections === undefined) config.maxSelections = 1;
+  if (config.judges === undefined) config.judges = [];
   return config;
 }
 
@@ -142,4 +153,47 @@ export function dbDeleteVote(id: string): boolean {
 export function dbClearVotes(): void {
   const db = getDb();
   db.prepare("DELETE FROM votes").run();
+}
+
+// ─── Judge Votes ────────────────────────────────────────────────────────────
+
+export function dbGetJudgeVotes(): JudgeVoteRecord[] {
+  const db = getDb();
+  const rows = db.prepare("SELECT * FROM judge_votes ORDER BY timestamp ASC").all() as {
+    id: string; judge_name: string; selected_id: string; timestamp: string;
+  }[];
+  return rows.map((r) => ({
+    id: r.id,
+    judgeName: r.judge_name,
+    selectedProductId: r.selected_id,
+    timestamp: r.timestamp,
+  }));
+}
+
+export function dbHasJudgeVoted(judgeName: string): boolean {
+  const db = getDb();
+  return !!db.prepare("SELECT id FROM judge_votes WHERE judge_name = ? LIMIT 1").get(judgeName);
+}
+
+export function dbSaveJudgeVote(vote: JudgeVoteRecord): { ok: boolean; error?: string } {
+  const db = getDb();
+  const tx = db.transaction(() => {
+    const existing = db.prepare("SELECT id FROM judge_votes WHERE judge_name = ? LIMIT 1").get(vote.judgeName);
+    if (existing) return { ok: false, error: "この審査員はすでに投票済みです" };
+    db.prepare(
+      "INSERT INTO judge_votes (id, judge_name, selected_id, timestamp) VALUES (?, ?, ?, ?)"
+    ).run(vote.id, vote.judgeName, vote.selectedProductId, vote.timestamp);
+    return { ok: true };
+  });
+  return tx() as { ok: boolean; error?: string };
+}
+
+export function dbDeleteJudgeVote(id: string): boolean {
+  const db = getDb();
+  return db.prepare("DELETE FROM judge_votes WHERE id = ?").run(id).changes > 0;
+}
+
+export function dbClearJudgeVotes(): void {
+  const db = getDb();
+  db.prepare("DELETE FROM judge_votes").run();
 }
