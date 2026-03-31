@@ -75,10 +75,25 @@ export default function CountdownTimer({ deadline, onExpired }: CountdownTimerPr
   return (
     <div className="flex flex-col items-center gap-3">
       {/* カウントダウン（メイン） */}
-      <div className="flex gap-2 sm:gap-3">
-        <TimeUnit value={pad(timeLeft.days * 24 + timeLeft.hours)} label="時間" urgent={isUrgent} />
-        <TimeUnit value={pad(timeLeft.minutes)} label="分" urgent={isUrgent} />
-        <TimeUnit value={pad(timeLeft.seconds)} label="秒" urgent={isUrgent} />
+      <div className="flex items-center gap-3 sm:gap-4">
+        {/* 投票時間残りラベル */}
+        <div className="flex flex-col items-center gap-1">
+          <span className={`text-xs font-semibold tracking-widest whitespace-nowrap ${isUrgent ? "text-red-400 animate-pulse" : "text-cyan-400/70"}`}>
+            投票
+          </span>
+          <span className={`text-xs font-semibold tracking-widest whitespace-nowrap ${isUrgent ? "text-red-400 animate-pulse" : "text-cyan-400/70"}`}>
+            時間
+          </span>
+          <span className={`text-xs font-semibold tracking-widest whitespace-nowrap ${isUrgent ? "text-red-400 animate-pulse" : "text-cyan-400/70"}`}>
+            残り
+          </span>
+        </div>
+        {/* 数字 */}
+        <div className="flex gap-2 sm:gap-3">
+          <TimeUnit value={pad(timeLeft.days * 24 + timeLeft.hours)} label="時間" urgent={isUrgent} />
+          <TimeUnit value={pad(timeLeft.minutes)} label="分" urgent={isUrgent} />
+          <TimeUnit value={pad(timeLeft.seconds)} label="秒" urgent={isUrgent} />
+        </div>
       </div>
       {/* 締め切り時刻（サブテキスト・控えめ） */}
       <p className="text-slate-600 text-xs tracking-wide">

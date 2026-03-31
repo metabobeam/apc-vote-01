@@ -13,19 +13,12 @@ interface PublicConfig {
 
 type Phase = "login" | "standby" | "revealing" | "complete";
 
-const REVEAL_DURATION = 5000; // バーが伸びきるまでの時間 (ms)
+const REVEAL_DURATION = 10000; // バーが伸びきるまでの時間 (ms)
 
-// バーの色 (ABC順インデックスに対応)
-const BAR_COLORS = [
-  "from-indigo-500 to-indigo-400",
-  "from-cyan-500 to-cyan-400",
-  "from-violet-500 to-violet-400",
-  "from-emerald-500 to-emerald-400",
-  "from-rose-500 to-rose-400",
-  "from-amber-500 to-amber-400",
-  "from-sky-500 to-sky-400",
-  "from-pink-500 to-pink-400",
-];
+// アニメーション中: 全て青。完了後: 1位=赤、2位=オレンジ赤、他=青
+const BAR_BLUE  = "from-blue-500 to-blue-400";
+const BAR_RED1  = "from-red-600 to-rose-500";   // 1位
+const BAR_RED2  = "from-orange-500 to-red-400"; // 2位
 
 export default function AnnouncePage() {
   const router = useRouter();
@@ -44,10 +37,16 @@ export default function AnnouncePage() {
   const [sortedResults, setSortedResults] = useState<VoteResult[]>([]);
   // 各バーの現在幅 (0〜100%)
   const [barWidths, setBarWidths] = useState<number[]>([]);
-  // winner の productId（同点1位対応で複数）
+  // アニメーション中の「現在の表示票数上限」（リアルタイムカウントアップ用）
+  const [displayCap, setDisplayCap] = useState(0);
+  // 1位・2位の productId（同点対応）
   const [winnerProductIds, setWinnerProductIds] = useState<string[]>([]);
+  const [secondProductIds, setSecondProductIds] = useState<string[]>([]);
+  // バー色をランク色に切り替えるフラグ
+  const [revealedRanks, setRevealedRanks] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const animFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (getResultsAuth()) {
@@ -117,57 +116,93 @@ export default function AnnouncePage() {
     if (!sortedResults.length) return;
     setPhase("revealing");
 
-    // 全バーを同時にスタート (わずかに遅延させてCSSトランジション確実に開始)
-    const t = setTimeout(() => {
-      setBarWidths(
-        sortedResults.map((r) => (r.count / maxCount) * 100)
-      );
-    }, 60);
-    timersRef.current.push(t);
+    // 絶対値ドリブン: 全バーが同じ「票数/秒」で伸びる → 誰が勝つかわからない
+    const mc = maxCount;
+    const results = sortedResults; // クロージャキャプチャ
+    const startTime = performance.now();
 
-    // 5秒後に完了フェーズへ
+    const animate = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / REVEAL_DURATION, 1);
+      // 現時点で「表示できる最大票数」= 全バー共通の絶対値上限
+      const cap = progress * mc;
+      setDisplayCap(cap);
+      setBarWidths(
+        results.map((r) => (Math.min(r.count, cap) / mc) * 100)
+      );
+      if (progress < 1) {
+        animFrameRef.current = requestAnimationFrame(animate);
+      }
+    };
+    animFrameRef.current = requestAnimationFrame(animate);
+
+    // REVEAL_DURATION 後: 完了処理
     const t2 = setTimeout(() => {
-      const maxCount = Math.max(...sortedResults.map((r) => r.count));
-      const winners = sortedResults
-        .filter((r) => r.count === maxCount && r.count > 0)
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+      animFrameRef.current = null;
+      setDisplayCap(mc);
+      setBarWidths(results.map((r) => (r.count / mc) * 100));
+
+      const winners = results
+        .filter((r) => r.count === mc && r.count > 0)
         .map((r) => r.productId);
-        setWinnerProductIds(winners);
+      const rank2Count = Math.max(
+        ...results.filter((r) => r.count < mc).map((r) => r.count),
+        0
+      );
+      const seconds = rank2Count > 0
+        ? results.filter((r) => r.count === rank2Count).map((r) => r.productId)
+        : [];
+      setWinnerProductIds(winners);
+      setSecondProductIds(seconds);
       setPhase("complete");
       setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 4000);
+      setTimeout(() => setShowConfetti(false), 30000);
     }, REVEAL_DURATION + 300);
     timersRef.current.push(t2);
+
+    // バー色切り替え（完了から少し後に派手演出）
+    const t3 = setTimeout(() => setRevealedRanks(true), REVEAL_DURATION + 800);
+    timersRef.current.push(t3);
   };
 
   const reset = () => {
+    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    animFrameRef.current = null;
     timersRef.current.forEach(clearTimeout);
     timersRef.current = [];
     setPhase("standby");
+    setDisplayCap(0);
     setWinnerProductIds([]);
+    setSecondProductIds([]);
+    setRevealedRanks(false);
     setShowConfetti(false);
     setBarWidths(new Array(sortedResults.length).fill(0));
   };
 
   useEffect(() => {
-    return () => timersRef.current.forEach(clearTimeout);
+    return () => {
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+      timersRef.current.forEach(clearTimeout);
+    };
   }, []);
 
   // ---- ログイン ----
   if (!authed) {
     return (
-      <main className="min-h-screen grid-bg flex items-center justify-center px-4">
+      <main className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 bg-violet-500/10 border border-violet-500/30 rounded-full px-3 py-1 mb-3">
-              <span className="text-violet-400 text-xs font-semibold tracking-widest">ANNOUNCE</span>
+            <div className="inline-flex items-center gap-2 bg-violet-100 border border-violet-200 rounded-full px-3 py-1 mb-3">
+              <span className="text-violet-600 text-xs font-semibold tracking-widest">ANNOUNCE</span>
             </div>
-            <h1 className="text-2xl font-bold gradient-text">結果発表</h1>
-            <p className="text-slate-500 text-sm mt-1">管理者パスワードで入室できます</p>
+            <h1 className="text-2xl font-bold text-gray-800">結果発表</h1>
+            <p className="text-gray-500 text-sm mt-1">管理者パスワードで入室できます</p>
           </div>
-          <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-8 shadow-2xl">
+          <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
             <div className="text-center mb-6">
               <div className="text-4xl mb-2">🎬</div>
-              <p className="text-slate-400 text-sm">認証が必要です</p>
+              <p className="text-gray-500 text-sm">認証が必要です</p>
             </div>
             <form onSubmit={handleLogin} className="flex flex-col gap-4">
               <input
@@ -176,9 +211,9 @@ export default function AnnouncePage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="管理者パスワード"
                 autoFocus
-                className="w-full bg-slate-800/80 border border-slate-600 focus:border-violet-500 focus:ring-1 focus:ring-violet-500/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 outline-none transition-all"
+                className="w-full bg-white border border-gray-300 focus:border-violet-500 focus:ring-1 focus:ring-violet-500/30 rounded-xl px-4 py-3 text-gray-800 placeholder-gray-400 outline-none transition-all"
               />
-              {authError && <p className="text-red-400 text-sm">{authError}</p>}
+              {authError && <p className="text-red-500 text-sm">{authError}</p>}
               <button
                 type="submit"
                 disabled={authLoading}
@@ -191,7 +226,7 @@ export default function AnnouncePage() {
             </form>
           </div>
           <div className="mt-4 text-center">
-            <button onClick={() => router.push("/")} className="text-slate-500 hover:text-slate-300 text-sm transition-colors">
+            <button onClick={() => router.push("/")} className="text-gray-400 hover:text-gray-600 text-sm transition-colors">
               ← 投票ページへ戻る
             </button>
           </div>
@@ -202,114 +237,224 @@ export default function AnnouncePage() {
 
   if (dataLoading || !stats || !config) {
     return (
-      <main className="min-h-screen grid-bg flex items-center justify-center">
+      <main className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-slate-400 text-sm tracking-widest">LOADING...</p>
+          <p className="text-gray-400 text-sm tracking-widest">LOADING...</p>
         </div>
       </main>
     );
   }
 
-
   return (
-    <main className="min-h-screen bg-[#020817] grid-bg flex flex-col items-center justify-center px-4 py-10 relative overflow-hidden">
-      {/* 背景グロー */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-violet-600/8 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-indigo-600/8 rounded-full blur-3xl" />
-      </div>
-
-      {/* 紙吹雪 */}
+    <main
+      className="w-screen h-screen overflow-hidden flex flex-col"
+      style={{
+        backgroundImage: "url('/announce-bg.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
+      {/* 桜吹雪 */}
       {showConfetti && (
         <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
-          {Array.from({ length: 36 }).map((_, i) => (
-            <ConfettiParticle key={i} index={i} />
+          {Array.from({ length: 160 }).map((_, i) => (
+            <SakuraPetal key={i} index={i} />
           ))}
         </div>
       )}
 
-      <div className="relative z-10 w-full max-w-3xl">
-        {/* ヘッダー */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 bg-violet-500/10 border border-violet-500/30 rounded-full px-4 py-1.5 mb-4">
-            <span className={`w-2 h-2 rounded-full ${phase === "revealing" ? "bg-violet-400 animate-ping" : "bg-violet-400"}`} />
-            <span className="text-violet-400 text-xs font-semibold tracking-widest uppercase">
-              {phase === "standby" ? "READY TO ANNOUNCE" : phase === "revealing" ? "REVEALING..." : "RESULT ANNOUNCED"}
-            </span>
-          </div>
-          <h1 className="text-4xl sm:text-5xl font-bold gradient-text mb-2">{config.title}</h1>
-          <p className="text-slate-500 text-sm">
-            総投票数:&nbsp;<span className="text-slate-300 font-mono font-bold">{stats.totalVotes}</span>&nbsp;票
-          </p>
+      {/* ── ヘッダーエリア (約20vh) ── */}
+      <div className="flex-shrink-0 flex flex-col items-center justify-end pb-4 pt-4" style={{ height: "20vh" }}>
+        {/* ステータスバッジ */}
+        <div
+          className="inline-flex items-center gap-3 rounded-full px-6 py-2 mb-3 border border-pink-300/60"
+          style={{ background: "rgba(255,255,255,0.55)", backdropFilter: "blur(12px)", boxShadow: "0 0 24px rgba(255,182,193,0.4)" }}
+        >
+          <span className={`w-2.5 h-2.5 rounded-full ${phase === "revealing" ? "bg-pink-400 animate-ping" : "bg-pink-400"}`} />
+          <span className="font-bold tracking-[0.3em] uppercase" style={{ fontSize: "clamp(11px,1vw,14px)", color: "#9d174d" }}>
+            {phase === "standby" ? "READY TO ANNOUNCE" : phase === "revealing" ? "REVEALING..." : "RESULT ANNOUNCED"}
+          </span>
         </div>
 
-        {/* ── バーグラフパネル ── */}
-        <div className="bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6 sm:p-8 shadow-2xl">
+        {/* タイトル */}
+        <h1
+          className="font-black tracking-tight leading-none"
+          style={{
+            fontSize: "clamp(2rem,4.5vw,5rem)",
+            color: "#ffffff",
+            textShadow: "0 0 40px rgba(255,100,150,0.9), 0 0 20px rgba(255,150,180,0.6), 0 2px 8px rgba(0,0,0,0.4)",
+          }}
+        >
+          {config.title}
+        </h1>
 
+        {/* 総投票数 */}
+        <p className="tracking-widest mt-1" style={{ fontSize: "clamp(11px,0.9vw,14px)", color: "rgba(100,30,80,0.7)" }}>
+          TOTAL&nbsp;
+          <span
+            className="font-black font-mono"
+            style={{ fontSize: "clamp(18px,1.8vw,28px)", color: "#be185d", textShadow: "0 0 12px rgba(255,182,193,0.7)" }}
+          >
+            {stats.totalVotes}
+          </span>
+          &nbsp;VOTES
+        </p>
+      </div>
+
+      {/* ── グラフエリア (約72vh) ── */}
+      <div className="flex-1 flex items-stretch px-12 pb-2" style={{ minHeight: 0 }}>
+        <div
+          className="w-full rounded-3xl flex flex-col"
+          style={{
+            background: "linear-gradient(135deg, rgba(255,240,245,0.82) 0%, rgba(255,228,238,0.88) 100%)",
+            backdropFilter: "blur(20px)",
+            border: "1px solid rgba(255,182,193,0.5)",
+            boxShadow: "0 0 60px rgba(255,182,193,0.3), inset 0 1px 0 rgba(255,255,255,0.8)",
+            padding: "clamp(16px,2vh,32px) clamp(20px,2.5vw,48px)",
+          }}
+        >
           {/* 列ヘッダー */}
-          <div className="flex items-center gap-3 mb-4 px-1">
-            <span className="text-slate-600 text-xs w-28 sm:w-36 flex-shrink-0">商品番号</span>
-            <span className="text-slate-600 text-xs flex-1">← 得票数</span>
-            <span className="text-slate-600 text-xs w-20 text-right">票数 / %</span>
+          <div
+            className="flex items-center gap-4 flex-shrink-0"
+            style={{ borderBottom: "1px solid rgba(219,112,147,0.2)", paddingBottom: "clamp(8px,1vh,14px)", marginBottom: "clamp(8px,1vh,14px)" }}
+          >
+            <span className="tracking-widest flex-shrink-0" style={{ fontSize: "clamp(10px,0.75vw,12px)", width: "clamp(90px,11vw,180px)", color: "rgba(157,23,77,0.6)" }}>お題</span>
+            <span className="uppercase tracking-widest flex-1" style={{ fontSize: "clamp(10px,0.75vw,12px)", color: "rgba(157,23,77,0.6)" }}>← VOTES</span>
+            <span
+              className="uppercase tracking-widest text-right flex-shrink-0 transition-opacity duration-700"
+              style={{ fontSize: "clamp(10px,0.75vw,12px)", width: "clamp(140px,16vw,240px)", color: "rgba(157,23,77,0.6)", opacity: phase === "standby" ? 0 : 1 }}
+            >COUNT</span>
           </div>
 
           {/* バー行 */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col flex-1 justify-evenly" style={{ gap: "clamp(4px,0.8vh,12px)" }}>
             {sortedResults.map((result, index) => {
-              const isWinner = phase === "complete" && winnerProductIds.includes(result.productId);
+              const isRank1 = winnerProductIds.includes(result.productId);
+              const isRank2 = secondProductIds.includes(result.productId);
               const barW = barWidths[index] ?? 0;
-              const color = BAR_COLORS[index % BAR_COLORS.length];
+              // アニメーション中は現在の displayCap に合わせた票数を表示
+              const shownCount = phase === "revealing"
+                ? Math.min(result.count, Math.round(displayCap))
+                : result.count;
+
+              // バー色: 完了後にランク色を適用
+              const color = revealedRanks && isRank1 ? BAR_RED1
+                          : revealedRanks && isRank2 ? BAR_RED2
+                          : BAR_BLUE;
+
+              // ランク発表アニメーション (完了後の1位・2位のみ)
+              const revealAnim = revealedRanks && (isRank1 || isRank2)
+                ? "animate-[rankReveal_8s_ease-out_forwards]"
+                : "";
+              const pulseAnim = revealedRanks && (isRank1 || isRank2)
+                ? "animate-[rankPulse_8s_ease-out_forwards]"
+                : "";
 
               return (
-                <div key={result.productId} className="flex items-center gap-3">
-                  {/* 商品番号ラベル (サイズ固定・レイアウト変化なし) */}
-                  <div className="w-28 sm:w-36 flex-shrink-0 relative">
-                    <span className="font-mono font-bold text-sm sm:text-base text-slate-200">
-                      {result.productNumber}
-                    </span>
-                    {/* 勝者マークは absolute で配置してレイアウトに影響させない */}
-                    {isWinner && (
-                      <span className="absolute -top-3 left-0 text-xs animate-bounce pointer-events-none">🏆</span>
-                    )}
-                  </div>
+                <div key={result.productId} className="flex items-center gap-4 flex-1" style={{ minHeight: 0 }}>
 
-                  {/* バートラック + 表示ボタン */}
-                  <div className="flex-1 relative">
-                    {/* トラック背景 (常に同じ背景色) */}
-                    <div className="h-9 sm:h-11 rounded-r-xl overflow-visible relative bg-slate-800/70">
-                      {/* 伸びるバー (色はアニメーション中も完了後も同じ) */}
-                      <div
-                        className={`absolute inset-y-0 left-0 rounded-r-xl bg-gradient-to-r ${color} ${
-                          isWinner ? "shadow-[0_0_18px_rgba(99,102,241,0.4)]" : ""
-                        }`}
+                  {/* 商品番号（改行対応） */}
+                  <div className="flex-shrink-0 flex flex-col justify-center" style={{ width: "clamp(90px,11vw,180px)" }}>
+                    {result.productNumber.split("\n").map((line, li) => (
+                      <span
+                        key={li}
+                        className="font-mono font-black tracking-widest block leading-tight"
                         style={{
-                          width: `${barW}%`,
-                          transition: phase === "revealing" || phase === "complete"
-                            ? `width ${REVEAL_DURATION}ms cubic-bezier(0.22, 1, 0.36, 1)`
-                            : "none",
+                          fontSize: li === 0 ? "clamp(14px,1.4vw,22px)" : "clamp(11px,1vw,16px)",
+                          color: revealedRanks && isRank1 ? "#7f1d1d"
+                               : revealedRanks && isRank2 ? "#7c2d12"
+                               : "#4a1942",
+                          textShadow: revealedRanks && isRank1 ? "0 0 16px rgba(239,68,68,0.7)"
+                                    : revealedRanks && isRank2 ? "0 0 12px rgba(249,115,22,0.6)"
+                                    : "none",
                         }}
                       >
-                        {/* スキャンライン (アニメーション中のみ) */}
-                        {phase === "revealing" && barW > 3 && (
-                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent animate-[scan_1.8s_ease-in-out_infinite]" />
-                        )}
-                      </div>
-
-                      {/* 0軸ライン */}
-                      <div className="absolute left-0 inset-y-0 w-0.5 bg-slate-500/60 z-10" />
-                    </div>
-
+                        {line}
+                      </span>
+                    ))}
                   </div>
 
-                  {/* 票数 / % (サイズ固定) */}
-                  <div className="w-20 flex-shrink-0 text-right">
-                    <span className="font-mono font-bold text-sm sm:text-base text-slate-200">
-                      {result.count}
-                    </span>
-                    <span className="text-slate-600 text-xs ml-0.5">票</span>
-                    <div className="text-xs font-mono text-slate-500">
-                      {result.percentage}%
+                  {/* バートラック */}
+                  <div className={`flex-1 relative ${pulseAnim}`} style={{ minHeight: 0 }}>
+                    <div
+                      className="rounded-r-2xl overflow-visible relative w-full"
+                      style={{
+                        height: "clamp(28px,4.5vh,56px)",
+                        background: "rgba(255,255,255,0.4)",
+                        border: revealedRanks && isRank1 ? "1px solid rgba(239,68,68,0.4)"
+                               : revealedRanks && isRank2 ? "1px solid rgba(249,115,22,0.3)"
+                               : "1px solid rgba(219,112,147,0.25)",
+                      }}
+                    >
+                      <div
+                        className={`absolute inset-y-0 left-0 rounded-r-2xl bg-gradient-to-r ${color} ${revealAnim}`}
+                        style={{
+                          width: `${barW}%`,
+                          boxShadow: revealedRanks && isRank1
+                            ? "0 0 28px rgba(239,68,68,0.7), 0 0 10px rgba(255,255,255,0.4)"
+                            : revealedRanks && isRank2
+                            ? "0 0 20px rgba(249,115,22,0.6)"
+                            : barW > 0 ? "0 0 10px rgba(59,130,246,0.4)" : "none",
+                        }}
+                      >
+                        {phase === "revealing" && barW > 3 && (
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-[scan_1.8s_ease-in-out_infinite]" />
+                        )}
+                      </div>
+                      <div className="absolute left-0 inset-y-0 w-px bg-pink-400/40 z-10" />
+                    </div>
+                  </div>
+
+                  {/* トロフィー＋票数の複合列（revealing / complete で表示） */}
+                  <div
+                    className="flex-shrink-0 flex items-center gap-2 transition-opacity duration-500"
+                    style={{
+                      width: "clamp(140px,16vw,240px)",
+                      opacity: phase === "standby" ? 0 : 1,
+                    }}
+                  >
+                    {/* トロフィー（投票数の左側） */}
+                    <div className="flex-shrink-0 flex items-center justify-center" style={{ width: "clamp(54px,6.5vw,100px)" }}>
+                      {revealedRanks && isRank1 && (
+                        <span
+                          className="inline-block"
+                          style={{
+                            fontSize: "clamp(54px,6vw,96px)",
+                            animation: "trophyDrop 0.9s cubic-bezier(0.34,1.56,0.64,1) forwards, trophyFloat 2.5s ease-in-out 1.2s infinite",
+                            filter: "drop-shadow(0 0 14px rgba(250,204,21,0.9))",
+                          }}
+                        >🥇</span>
+                      )}
+                      {revealedRanks && isRank2 && (
+                        <span
+                          className="inline-block"
+                          style={{
+                            fontSize: "clamp(54px,6vw,96px)",
+                            animation: "trophyDrop 0.9s 0.15s cubic-bezier(0.34,1.56,0.64,1) both, trophyFloat 2.5s ease-in-out 1.4s infinite",
+                            filter: "drop-shadow(0 0 14px rgba(192,192,192,0.9))",
+                          }}
+                        >🥈</span>
+                      )}
+                    </div>
+                    {/* 票数・% */}
+                    <div className="text-right flex-1">
+                      <span
+                        className="font-mono font-black"
+                        style={{
+                          fontSize: "clamp(24px,2.4vw,40px)",
+                          color: revealedRanks && isRank1 ? "#991b1b"
+                               : revealedRanks && isRank2 ? "#9a3412"
+                               : "#be185d",
+                          textShadow: revealedRanks && isRank1 ? "0 0 12px rgba(239,68,68,0.6)" : "none",
+                        }}
+                      >
+                        {shownCount}
+                      </span>
+                      <span style={{ fontSize: "clamp(10px,0.7vw,12px)", color: "rgba(157,23,77,0.5)", marginLeft: "2px" }}>票</span>
+                      <div className="font-mono" style={{ fontSize: "clamp(10px,0.75vw,12px)", color: "rgba(157,23,77,0.4)" }}>
+                        {result.percentage}%
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -317,59 +462,65 @@ export default function AnnouncePage() {
             })}
           </div>
 
-          {/* 表示ボタン行（常にレンダリングして高さを固定・visibility で表示切り替え）*/}
+          {/* 表示ボタン行 */}
           <div
-            className="mt-5 flex items-center gap-3"
-            style={{ visibility: phase === "standby" ? "visible" : "hidden" }}
+            className="flex-shrink-0 flex items-center gap-4"
+            style={{
+              visibility: phase === "standby" ? "visible" : "hidden",
+              marginTop: "clamp(8px,1.2vh,20px)",
+              paddingTop: "clamp(8px,1vh,14px)",
+              borderTop: "1px solid rgba(219,112,147,0.2)",
+            }}
           >
-            <div className="w-28 sm:w-36 flex-shrink-0" />
-            <div className="flex-1 flex items-center gap-3">
+            <div className="flex-shrink-0" style={{ width: "clamp(90px,11vw,180px)" }} />
+            <div className="flex-1 flex items-center gap-5">
               <button
                 onClick={startReveal}
-                className="flex items-center gap-2
-                  bg-gradient-to-r from-violet-600 to-indigo-600
-                  hover:from-violet-500 hover:to-indigo-500
-                  text-white font-bold text-base sm:text-lg
-                  px-6 py-2.5 rounded-xl
-                  shadow-lg shadow-violet-500/40
-                  transition-all active:scale-95"
+                className="flex items-center gap-3 font-black rounded-2xl transition-all active:scale-95"
+                style={{
+                  fontSize: "clamp(14px,1.4vw,22px)",
+                  padding: "clamp(10px,1.2vh,16px) clamp(24px,2.5vw,40px)",
+                  background: "linear-gradient(135deg, #ec4899, #db2777)",
+                  color: "#fff",
+                  boxShadow: "0 0 24px rgba(236,72,153,0.6), 0 0 48px rgba(219,39,119,0.3), inset 0 1px 0 rgba(255,255,255,0.3)",
+                }}
               >
                 <PlayIcon />
-                表示
+                結果発表
               </button>
-              <span className="text-slate-600 text-xs">← ボタンを押すと発表が始まります</span>
             </div>
-            <div className="w-20 flex-shrink-0" />
+            <div className="flex-shrink-0" style={{ width: "clamp(140px,16vw,240px)" }} />
           </div>
-
         </div>
+      </div>
 
-        {/* 完了後ボタン（常にレンダリング・visibility で表示切り替え）*/}
-        <div
-          className="flex justify-center gap-3 mt-6"
-          style={{ visibility: phase === "complete" ? "visible" : "hidden" }}
-        >
+      {/* ── フッターエリア (約10vh) ── */}
+      <div className="flex-shrink-0 flex items-center justify-center gap-6" style={{ height: "10vh" }}>
+        {/* 完了後ボタン */}
+        <div style={{ visibility: phase === "complete" ? "visible" : "hidden" }} className="flex gap-4">
           <button
             onClick={reset}
-            className="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 rounded-xl text-sm font-medium transition-all"
+            className="font-medium rounded-xl border transition-all"
+            style={{ background: "rgba(255,255,255,0.6)", backdropFilter: "blur(8px)", border: "1px solid rgba(219,112,147,0.4)", color: "#9d174d", fontSize: "clamp(12px,1vw,16px)", padding: "clamp(8px,1vh,12px) clamp(20px,2vw,32px)" }}
           >
             ↩ もう一度
           </button>
           <button
             onClick={() => router.push("/admin")}
-            className="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 rounded-xl text-sm font-medium transition-all"
+            className="font-medium rounded-xl border transition-all"
+            style={{ background: "rgba(255,255,255,0.6)", backdropFilter: "blur(8px)", border: "1px solid rgba(219,112,147,0.4)", color: "#9d174d", fontSize: "clamp(12px,1vw,16px)", padding: "clamp(8px,1vh,12px) clamp(20px,2vw,32px)" }}
           >
             管理者へ
           </button>
         </div>
 
-        {/* フッター */}
-        <div className="mt-6 flex justify-center gap-6">
-          <button onClick={() => router.push("/")} className="text-slate-700 hover:text-slate-400 text-xs transition-colors">
+        {/* フッターリンク */}
+        <div className="flex gap-5">
+          <button onClick={() => router.push("/")} className="transition-colors" style={{ fontSize: "clamp(10px,0.75vw,12px)", color: "rgba(157,23,77,0.4)" }}>
             ← 投票ページ
           </button>
-          <span className="text-slate-800">|</span>
-          <button onClick={() => router.push("/admin")} className="text-slate-700 hover:text-slate-400 text-xs transition-colors">
+          <span style={{ fontSize: "clamp(10px,0.75vw,12px)", color: "rgba(157,23,77,0.2)" }}>|</span>
+          <button onClick={() => router.push("/admin")} className="transition-colors" style={{ fontSize: "clamp(10px,0.75vw,12px)", color: "rgba(157,23,77,0.4)" }}>
             管理者
           </button>
         </div>
@@ -386,19 +537,38 @@ function PlayIcon() {
   );
 }
 
-function ConfettiParticle({ index }: { index: number }) {
-  const colors = ["#6366f1", "#8b5cf6", "#06b6d4", "#f59e0b", "#10b981", "#f43f5e", "#eab308", "#3b82f6"];
+function SakuraPetal({ index }: { index: number }) {
+  // 桜の花びら系のピンク・白系カラー
+  const colors = ["#ffb7c5", "#ffc8d5", "#ffaec9", "#ff9eb5", "#ffd1dc", "#ffccd5", "#ff85a1", "#ffe0e8", "#f9a8c0", "#fdb8c8"];
   const color = colors[index % colors.length];
-  const left = `${(index * 31 + 5) % 100}%`;
-  const delay = `${(index * 0.13) % 2.5}s`;
-  const duration = `${2.5 + (index % 4) * 0.4}s`;
-  const size = index % 3 === 0 ? "w-2 h-2" : index % 3 === 1 ? "w-1.5 h-3" : "w-2.5 h-1.5";
-  const rotate = ["rotate-0", "rotate-45", "-rotate-12", "rotate-12"][index % 4];
+  const left = `${(index * 37 + 3) % 100}%`;
+  // ペタルごとにディレイをばらつかせて自然な花吹雪に
+  const delay = `${(index * 0.19) % 5}s`;
+  // 落下時間: 10 〜 17.2s
+  const duration = `${10 + (index % 5) * 1.8}s`;
+  // 花びら形状のバリエーション（3倍サイズ）
+  const shapes = [
+    { w: 36, h: 21, br: "60% 40% 60% 40% / 70% 70% 30% 30%" },
+    { w: 27, h: 36, br: "40% 60% 40% 60% / 30% 30% 70% 70%" },
+    { w: 42, h: 24, br: "50% 50% 40% 60% / 60% 40% 60% 40%" },
+    { w: 30, h: 30, br: "60% 40% 50% 50% / 50% 60% 40% 50%" },
+    { w: 33, h: 18, br: "70% 30% 70% 30% / 60% 60% 40% 40%" },
+  ];
+  const shape = shapes[index % shapes.length];
 
   return (
     <div
-      className={`absolute top-0 ${size} ${rotate} rounded-sm`}
-      style={{ left, backgroundColor: color, animation: `confettiFall ${duration} ${delay} ease-in forwards` }}
+      className="absolute top-0"
+      style={{
+        left,
+        width: `${shape.w}px`,
+        height: `${shape.h}px`,
+        backgroundColor: color,
+        borderRadius: shape.br,
+        opacity: 0.9,
+        animation: `sakuraFall ${duration} ${delay} ease-in-out forwards`,
+        filter: `drop-shadow(0 0 3px rgba(255,150,180,0.5))`,
+      }}
     />
   );
 }

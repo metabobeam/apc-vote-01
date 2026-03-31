@@ -49,6 +49,13 @@ export default function VotePage() {
     setIsExpired(true);
   }, []);
 
+  // 全角数字→半角、数字以外を除去
+  const normalizeEmployeeNumber = (value: string) => {
+    return value
+      .replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
+      .replace(/[^0-9]/g, "");
+  };
+
   const handleEmployeeSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!employeeNumber.trim()) {
@@ -63,7 +70,7 @@ export default function VotePage() {
     if (!config) return;
     const max = config.maxSelections;
     if (max === 1) {
-      setSelectedIds([id]);
+      setSelectedIds(selectedIds.includes(id) ? [] : [id]);
       return;
     }
     if (selectedIds.includes(id)) {
@@ -124,6 +131,14 @@ export default function VotePage() {
     }
   };
 
+  const handleBackToTop = () => {
+    setStep("input");
+    setEmployeeNumber("");
+    setSelectedIds([]);
+    setError("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const selectedOptions = config?.options.filter((o) => selectedIds.includes(o.id)) ?? [];
 
   if (!config) {
@@ -143,12 +158,22 @@ export default function VotePage() {
     : `${maxSel}作品を選択 (${selectedIds.length}/${maxSel})`;
 
   return (
-    <main className="min-h-screen grid-bg flex flex-col items-center justify-center px-4 py-8 relative overflow-hidden">
+    <main className="min-h-screen grid-bg flex flex-col items-center justify-center px-4 py-8 relative overflow-x-hidden">
       {/* Background decorations */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-cyan-600/10 rounded-full blur-3xl" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-violet-600/5 rounded-full blur-2xl" />
+      </div>
+
+      {/* 管理画面へリンク（右上固定） */}
+      <div className="fixed top-4 right-4 z-50">
+        <button
+          onClick={() => router.push("/admin")}
+          className="text-slate-500 hover:text-slate-300 text-xs border border-slate-700 hover:border-slate-500 bg-slate-900/80 backdrop-blur-sm px-3 py-1.5 rounded-lg transition-colors"
+        >
+          管理画面へ
+        </button>
       </div>
 
       <div className="relative z-10 w-full max-w-lg">
@@ -187,7 +212,7 @@ export default function VotePage() {
                   <span className="text-slate-400 text-xs">
                     投票作品:{" "}
                     {myVote.productNumbers.map((pn, i) => (
-                      <span key={i} className="text-emerald-300 font-mono font-bold">
+                      <span key={i} className="text-emerald-300 font-mono font-bold whitespace-pre-line">
                         {i > 0 && <span className="text-slate-600 mx-1">/</span>}
                         {pn}
                       </span>
@@ -220,6 +245,7 @@ export default function VotePage() {
             </p>
           </div>
         ) : (
+          <>
           <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6 sm:p-8 shadow-2xl glow-card">
 
             {/* Step: Input employee number */}
@@ -231,9 +257,10 @@ export default function VotePage() {
                   </label>
                   <input
                     type="text"
+                    inputMode="numeric"
                     value={employeeNumber}
-                    onChange={(e) => setEmployeeNumber(e.target.value)}
-                    placeholder="例: EMP-12345"
+                    onChange={(e) => setEmployeeNumber(normalizeEmployeeNumber(e.target.value))}
+                    placeholder="例: 12345"
                     className="w-full bg-slate-800/80 border border-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 outline-none transition-all text-sm sm:text-base"
                     autoComplete="off"
                   />
@@ -299,7 +326,7 @@ export default function VotePage() {
                             {isSelected ? "✓" : String.fromCharCode(65 + index)}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-white font-bold text-base sm:text-lg font-mono">
+                            <p className="text-white font-bold text-base sm:text-lg font-mono leading-snug whitespace-pre-line">
                               {option.productNumber}
                             </p>
                             {option.description && option.description !== option.productNumber && (
@@ -362,7 +389,7 @@ export default function VotePage() {
                               {i + 1}
                             </span>
                           )}
-                          <span className="text-indigo-300 font-mono font-bold text-base">
+                          <span className="text-indigo-300 font-mono font-bold text-base whitespace-pre-line leading-snug">
                             {opt.productNumber}
                           </span>
                         </div>
@@ -416,7 +443,7 @@ export default function VotePage() {
                         {maxSel > 1 && (
                           <span className="text-slate-500 text-xs">{i + 1}.</span>
                         )}
-                        <span className="text-indigo-300 font-mono font-bold text-lg">
+                        <span className="text-indigo-300 font-mono font-bold text-lg whitespace-pre-line leading-snug">
                           {opt.productNumber}
                         </span>
                       </div>
@@ -430,17 +457,21 @@ export default function VotePage() {
               </div>
             )}
           </div>
+          {step === "done" && (
+            <div className="flex justify-end mt-3 pr-1">
+              <button
+                type="button"
+                onClick={handleBackToTop}
+                className="text-slate-600 hover:text-slate-400 text-xs transition-colors"
+              >
+                Topへ
+              </button>
+            </div>
+          )}
+          </>
         )}
 
-        {/* Footer: 管理者リンクのみ */}
-        <div className="mt-6 flex justify-center">
-          <button
-            onClick={() => router.push("/admin")}
-            className="text-slate-600 hover:text-slate-400 text-xs transition-colors"
-          >
-            管理者
-          </button>
-        </div>
+
       </div>
     </main>
   );

@@ -7,15 +7,33 @@ export async function GET() {
     const config = dbGetConfig();
     const votes = dbGetVotes();
 
-    const results = config.options.map((option) => {
-      const count = votes.filter((v) => v.selectedProductIds.includes(option.id)).length;
-      const percentage = votes.length > 0 ? Math.round((count / votes.length) * 100) : 0;
-      return { productId: option.id, productNumber: option.productNumber, description: option.description, count, percentage };
+    // 同一社員の重複投票は最新の1件のみ有効とする
+    const validVotesMap = new Map<string, typeof votes[0]>();
+    for (const v of votes) {
+      const existing = validVotesMap.get(v.employeeNumber);
+      if (!existing || v.timestamp > existing.timestamp) {
+        validVotesMap.set(v.employeeNumber, v);
+      }
+    }
+    const validVotes = Array.from(validVotesMap.values());
+
+    const rawResults = config.options.map((option) => {
+      const count = validVotes.filter((v) => v.selectedProductIds.includes(option.id)).length;
+      return { productId: option.id, productNumber: option.productNumber, description: option.description, count, percentage: 0 };
     });
+
+    // 総票数 = 有効投票者数 × 1人あたりの選択数（12人×2票=24）
+    const maxSel = config.maxSelections ?? 1;
+    const totalVotes = validVotes.length * maxSel;
+
+    const results = rawResults.map((r) => ({
+      ...r,
+      percentage: totalVotes > 0 ? Math.round((r.count / totalVotes) * 100) : 0,
+    }));
     results.sort((a, b) => b.count - a.count);
 
     const stats: VoteStats = {
-      totalVotes: votes.length,
+      totalVotes,
       maxSelections: config.maxSelections ?? 1,
       results,
       lastUpdated: new Date().toISOString(),
