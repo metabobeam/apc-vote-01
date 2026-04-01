@@ -137,7 +137,6 @@ export default function JudgeAnnouncePage() {
   const [phase, setPhase]         = useState<Phase>("standby");
   const [revealedCount, setRevealedCount] = useState(0);
   const [animating, setAnimating] = useState(false);
-  const [flashIdx, setFlashIdx]   = useState<number | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -167,19 +166,16 @@ export default function JudgeAnnouncePage() {
   const handleRevealNext = () => {
     if (animating || revealedCount >= orderedVotes.length) return;
     setAnimating(true);
-    setFlashIdx(revealedCount);           // 前半フリップ開始
+    setRevealedCount((n) => n + 1);
+    // フリップ transition が 850ms → 少し余裕を持たせて 1000ms 後に解除
     setTimeout(() => {
-      setRevealedCount((n) => n + 1);    // 90°で内容差し替え
-    }, 450);
-    setTimeout(() => {
-      setFlashIdx(null);                  // 後半フリップ終了
       setAnimating(false);
-      if (revealedCount + 1 >= orderedVotes.length) setTimeout(() => setPhase("finished"), 600);
-    }, 900);
+      if (revealedCount + 1 >= orderedVotes.length) setTimeout(() => setPhase("finished"), 500);
+    }, 1000);
   };
 
   const handleStart = () => { setPhase("revealing"); setRevealedCount(0); };
-  const handleReset = () => { setPhase("standby"); setRevealedCount(0); setAnimating(false); setFlashIdx(null); fetchData(); };
+  const handleReset = () => { setPhase("standby"); setRevealedCount(0); setAnimating(false); fetchData(); };
 
   if (loading) return (
     <main className="min-h-screen flex items-center justify-center" style={{ background: "#05050f" }}>
@@ -332,7 +328,6 @@ export default function JudgeAnnouncePage() {
               style={{ minWidth:`${orderedVotes.length*110}px` }}>
               {orderedVotes.map((vote, idx) => {
                 const revealed  = idx < revealedCount;
-                const isFlash   = idx === flashIdx;
                 const isWinner  = revealed && phase==="finished" && winnerIds.includes(vote.selectedProductId);
                 const colorIdx  = candidateColorMap[vote.selectedProductId] ?? 0;
                 const color     = CANDIDATE_COLORS[colorIdx];
@@ -343,7 +338,7 @@ export default function JudgeAnnouncePage() {
                     style={{ width:"clamp(88px,11vw,120px)" }}>
 
                     {/* 王冠 */}
-                    <div className="w-full transition-all duration-500"
+                    <div className="w-full"
                       style={{
                         filter: isWinner
                           ? "drop-shadow(0 0 12px rgba(255,220,50,1))"
@@ -351,28 +346,46 @@ export default function JudgeAnnouncePage() {
                             ? `drop-shadow(0 0 6px ${color.glow})`
                             : "brightness(0.85)",
                         transform: isWinner ? "scale(1.05)" : "scale(1)",
+                        transition: "filter 0.5s ease, transform 0.5s ease",
                       }}>
                       <CrownSvg lit={revealed} />
                     </div>
 
-                    {/* パネル本体（ハーフフリップ） */}
+                    {/* パネル本体（CSS 3D フリップ） */}
+                    {/* perspective ラッパー */}
                     <div style={{
                       width: "100%",
+                      perspective: "900px",
+                      // 次に発表されるパネルをGPUに先読みさせる
+                      willChange: idx === revealedCount ? "transform" : "auto",
                       boxShadow: isWinner
                         ? `0 0 40px ${color.glow},0 0 80px ${color.glow},0 8px 32px rgba(0,0,0,0.6)`
                         : revealed
                           ? `0 0 20px ${color.glow},0 6px 24px rgba(0,0,0,0.6)`
                           : "0 4px 16px rgba(0,0,0,0.6)",
                       transition: "box-shadow 0.5s ease",
-                      // フリップアニメーション
-                      animation: isFlash
-                        ? (revealed
-                            ? "flipIn 0.45s ease-in-out forwards"
-                            : "flipOut 0.45s ease-in-out forwards")
-                        : "none",
                     }}>
-                        {revealed ? (
-                          /* ── 発表後：候補カラーパネル ── */
+                      {/* フリップコンテナ */}
+                      <div style={{
+                        position: "relative",
+                        height: "clamp(200px,26vw,320px)",
+                        transformStyle: "preserve-3d",
+                        transform: revealed ? "rotateY(180deg)" : "rotateY(0deg)",
+                        transition: "transform 0.85s cubic-bezier(0.4,0,0.2,1)",
+                        willChange: "transform",
+                      }}>
+
+                        {/* 表面（発表前）: backface-visibility:hidden で裏返し時は非表示 */}
+                        <div style={{ position:"absolute", inset:0, backfaceVisibility:"hidden", WebkitBackfaceVisibility:"hidden" }}>
+                          <UnrevealedPanel name={vote.judgeName} idx={idx} />
+                        </div>
+
+                        {/* 裏面（発表後）: 最初から 180deg 回転して配置 */}
+                        <div style={{
+                          position:"absolute", inset:0,
+                          backfaceVisibility:"hidden", WebkitBackfaceVisibility:"hidden",
+                          transform:"rotateY(180deg)",
+                        }}>
                           <div style={{ position:"relative", width:"100%", display:"flex", flexDirection:"column", height:"clamp(200px,26vw,320px)" }}>
                             {/* 左柱 */}
                             <div style={{ position:"absolute", top:0, bottom:0, left:0, width:"12%", background:"linear-gradient(to right,#5a3800,#c8900a,#ffe066,#c8900a,#5a3800)" }}>
@@ -394,9 +407,7 @@ export default function JudgeAnnouncePage() {
                             <div style={{ position:"absolute", left:"11%", right:"11%", top:0, bottom:0, display:"flex", flexDirection:"column" }}>
                               <div style={{ height:"10px", background:"linear-gradient(180deg,#c8900a,#7a5200)", borderBottom:"1px solid #ffe066" }} />
                               <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"space-between", padding:"12px 0", background:color.bg, position:"relative" }}>
-                                {/* 光沢 */}
                                 <div style={{ position:"absolute", inset:0, pointerEvents:"none", background:"linear-gradient(170deg,rgba(255,255,255,0.18) 0%,transparent 50%)" }} />
-                                {/* 投票先 */}
                                 <p style={{
                                   fontWeight:900, color:"#fff", lineHeight:1.2, position:"relative", zIndex:1,
                                   writingMode:"vertical-rl", textOrientation:"mixed",
@@ -405,9 +416,7 @@ export default function JudgeAnnouncePage() {
                                 }}>
                                   {candidate?.productNumber.split("\n")[0]}
                                 </p>
-                                {/* 区切り */}
                                 <div style={{ width:"80%", borderTop:"1px solid rgba(255,255,255,0.3)" }} />
-                                {/* 審査員名 */}
                                 <p style={{
                                   fontWeight:700, color:"rgba(255,255,255,0.75)", lineHeight:1.2, position:"relative", zIndex:1,
                                   writingMode:"vertical-rl", textOrientation:"mixed",
@@ -420,11 +429,10 @@ export default function JudgeAnnouncePage() {
                               <div style={{ height:"10px", background:"linear-gradient(0deg,#c8900a,#7a5200)", borderTop:"1px solid #ffe066" }} />
                             </div>
                           </div>
-                        ) : (
-                          /* ── 発表前：審査員名パネル ── */
-                          <UnrevealedPanel name={vote.judgeName} idx={idx} />
-                        )}
-                    </div>
+                        </div>
+
+                      </div>{/* /フリップコンテナ */}
+                    </div>{/* /perspective ラッパー */}
 
                     {/* 台座 */}
                     <div className="w-full"
@@ -482,20 +490,6 @@ export default function JudgeAnnouncePage() {
         @keyframes fadeInText {
           from { opacity:0; transform:translateY(10px); }
           to   { opacity:1; transform:translateY(0); }
-        }
-        /* ハーフフリップ: 前半 0→90deg（消える） */
-        @keyframes flipOut {
-          from { transform: perspective(700px) rotateY(0deg); }
-          to   { transform: perspective(700px) rotateY(90deg); }
-        }
-        /* ハーフフリップ: 後半 -90→0deg（現れる） */
-        @keyframes flipIn {
-          from { transform: perspective(700px) rotateY(-90deg); }
-          to   { transform: perspective(700px) rotateY(0deg); }
-        }
-        @keyframes flashFade {
-          0%   { opacity:0.7; }
-          100% { opacity:0; }
         }
         @keyframes bounceIn {
           0%   { transform:scale(0) rotate(-20deg); opacity:0; }
