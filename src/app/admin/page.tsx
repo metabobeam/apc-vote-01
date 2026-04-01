@@ -492,6 +492,7 @@ export default function AdminPage() {
                 </p>
               )}
               <button
+                id="main-save-btn"
                 type="submit"
                 disabled={saving}
                 className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
@@ -565,26 +566,6 @@ export default function AdminPage() {
                 </button>
               </div>
 
-              {/* 最下部にも保存ボタン */}
-              <div className="border-t border-gray-200 pt-4 mt-2">
-                {saveMsg && (
-                  <p className={`text-center text-sm font-medium mb-3 ${saveMsg.startsWith("✓") ? "text-green-600" : "text-red-500"}`}>
-                    {saveMsg}
-                  </p>
-                )}
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {saving ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      保存中...
-                    </>
-                  ) : "設定を保存"}
-                </button>
-              </div>
             </div>
           </form>
 
@@ -1015,6 +996,28 @@ export default function AdminPage() {
               className="text-sm bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-white font-bold px-4 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-2"
             >
               🏆 表彰発表へ →
+            </button>
+          </div>
+
+          {/* ページ最下部の保存ボタン */}
+          <div className="mt-8 pb-4">
+            {saveMsg && (
+              <p className={`text-center text-sm font-medium mb-3 ${saveMsg.startsWith("✓") ? "text-green-600" : "text-red-500"}`}>
+                {saveMsg}
+              </p>
+            )}
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => document.getElementById("main-save-btn")?.click()}
+              className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {saving ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  保存中...
+                </>
+              ) : "設定を保存"}
             </button>
           </div>
 
