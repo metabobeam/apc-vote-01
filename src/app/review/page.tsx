@@ -175,6 +175,14 @@ export default function ReviewPage() {
       <div className="max-w-3xl mx-auto px-4 py-8">
         {/* ヘッダー */}
         <div className="mb-8">
+          <div className="flex items-center justify-between mb-2">
+            <a
+              href="/admin"
+              className="text-sm text-gray-400 hover:text-gray-700 transition-colors flex items-center gap-1"
+            >
+              ← 管理画面
+            </a>
+          </div>
           <div className="inline-flex items-center gap-2 bg-teal-100 border border-teal-200 rounded-full px-3 py-1 mb-2">
             <span className="text-teal-700 text-xs font-semibold tracking-widest">REVIEW</span>
           </div>
@@ -362,11 +370,22 @@ export default function ReviewPage() {
           </div>
         )}
 
-        {/* フッターリンク */}
+        {/* フッター */}
         <div className="mt-8 text-center">
-          <a href="/admin" className="text-sm text-gray-400 hover:text-gray-600 transition-colors">
-            ← 管理画面へ戻る
-          </a>
+          <button
+            onClick={() => {
+              if (selectedJudge) {
+                setSelectedJudge(null);
+                setSavedTargets(new Set());
+                setErrorMsgs({});
+              } else {
+                window.history.back();
+              }
+            }}
+            className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            ← 戻る
+          </button>
         </div>
       </div>
     </main>
