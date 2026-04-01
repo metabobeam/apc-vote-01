@@ -42,3 +42,9 @@ next-env.d.ts
 
 # vote data (server-side persistent data)
 /data/*.json
+/data/*.db
+/data/*.db-shm
+/data/*.db-wal
+
+# temp files
+commit_msg.txt
