@@ -290,14 +290,18 @@ export default function ResultsPage() {
                   </div>
                   <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
                     <div
-                      className={`h-full rounded-full transition-all duration-700 ${
+                      className={`h-full rounded-full ${
                         index === 0
                           ? "bg-gradient-to-r from-amber-500 to-yellow-400"
                           : index === 1
                           ? "bg-gradient-to-r from-slate-400 to-slate-300"
                           : "bg-gradient-to-r from-indigo-600 to-violet-500"
                       }`}
-                      style={{ width: `${(result.count / maxCount) * 100}%` }}
+                      style={{
+                        width: `${(result.count / maxCount) * 100}%`,
+                        transition: "width 700ms ease-out",
+                        willChange: "width",
+                      }}
                     />
                   </div>
                 </div>

@@ -36,14 +36,16 @@ export default function AnnouncePage() {
   const [phase, setPhase] = useState<Phase>("login");
   // 設定画面と同じ順序でソートした結果
   const [sortedResults, setSortedResults] = useState<VoteResult[]>([]);
-  // 各バーの現在幅 (0〜100%)
+  // 各バーの現在幅 (0〜100%) ※アニメーション中はDOM refで直接更新
   const [barWidths, setBarWidths] = useState<number[]>([]);
-  // アニメーション中の「現在の表示票数上限」（リアルタイムカウントアップ用）
-  const [displayCap, setDisplayCap] = useState(0);
+  // バー・票数カウントのDOM refs（RAF内でReactを介さず直接更新）
+  const barRefs  = useRef<(HTMLDivElement | null)[]>([]);
+  const countRefs = useRef<(HTMLSpanElement | null)[]>([]);
   // 1位・2位の productId（同点対応）
   const [winnerProductIds, setWinnerProductIds] = useState<string[]>([]);
   const [secondProductIds, setSecondProductIds] = useState<string[]>([]);
   // バー色・アイコン切り替えフラグ（2位先、1位後）
+
   const [revealedRank2, setRevealedRank2] = useState(false);
   const [revealedRank1, setRevealedRank1] = useState(false);
   // 1位発表時の全画面フラッシュ
@@ -121,31 +123,43 @@ export default function AnnouncePage() {
     if (!sortedResults.length) return;
     setPhase("revealing");
 
-    // 絶対値ドリブン: 全バーが同じ「票数/秒」で伸びる → 誰が勝つかわからない
     const mc = maxCount;
-    const results = sortedResults; // クロージャキャプチャ
+    const results = sortedResults;
     const startTime = performance.now();
 
-    const animate = (now: number) => {
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / REVEAL_DURATION, 1);
-      // 現時点で「表示できる最大票数」= 全バー共通の絶対値上限
-      const cap = progress * mc;
-      setDisplayCap(cap);
-      setBarWidths(
-        results.map((r) => (Math.min(r.count, cap) / mc) * 100)
-      );
-      if (progress < 1) {
-        animFrameRef.current = requestAnimationFrame(animate);
-      }
+    // 次フレームでアニメーション開始（setPhase re-renderが先に完了するよう2重RAF）
+    const kick = () => {
+      // GPUに先読みさせる
+      barRefs.current.forEach(el => { if (el) el.style.willChange = "width"; });
+
+      const animate = (now: number) => {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / REVEAL_DURATION, 1);
+        const cap = progress * mc;
+
+        // React stateを使わずDOMを直接更新 → 60fps再レンダーなし
+        results.forEach((r, i) => {
+          const barEl   = barRefs.current[i];
+          const countEl = countRefs.current[i];
+          if (barEl)   barEl.style.width = `${(Math.min(r.count, cap) / mc) * 100}%`;
+          if (countEl) countEl.textContent = String(Math.min(r.count, Math.round(cap)));
+        });
+
+        if (progress < 1) {
+          animFrameRef.current = requestAnimationFrame(animate);
+        } else {
+          barRefs.current.forEach(el => { if (el) el.style.willChange = "auto"; });
+        }
+      };
+      animFrameRef.current = requestAnimationFrame(animate);
     };
-    animFrameRef.current = requestAnimationFrame(animate);
+    requestAnimationFrame(kick);
 
     // REVEAL_DURATION 後: 完了処理
     const t2 = setTimeout(() => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       animFrameRef.current = null;
-      setDisplayCap(mc);
+      // 最終値をstateに反映（refで設定済みだが、Reactの管理値も揃えておく）
       setBarWidths(results.map((r) => (r.count / mc) * 100));
 
       const winners = results
@@ -186,7 +200,9 @@ export default function AnnouncePage() {
     timersRef.current.forEach(clearTimeout);
     timersRef.current = [];
     setPhase("standby");
-    setDisplayCap(0);
+    // refのバー幅もリセット
+    barRefs.current.forEach(el => { if (el) el.style.width = "0%"; });
+    countRefs.current.forEach(el => { if (el) el.textContent = "0"; });
     setWinnerProductIds([]);
     setSecondProductIds([]);
     setRevealedRank2(false);
@@ -357,10 +373,8 @@ export default function AnnouncePage() {
               const isRank1 = winnerProductIds.includes(result.productId);
               const isRank2 = secondProductIds.includes(result.productId);
               const barW = barWidths[index] ?? 0;
-              // アニメーション中は現在の displayCap に合わせた票数を表示
-              const shownCount = phase === "revealing"
-                ? Math.min(result.count, Math.round(displayCap))
-                : result.count;
+              // revealing中はDOM refで直接更新するため、JSX値は0（初期値）のみ管理
+              const shownCount = phase === "complete" ? result.count : 0;
 
               // バー色: 2位→1位の順で変化
               const color = revealedRank1 && isRank1 ? BAR_RED1
@@ -412,9 +426,11 @@ export default function AnnouncePage() {
                       }}
                     >
                       <div
+                        ref={(el) => { barRefs.current[index] = el; }}
                         className={`absolute inset-y-0 left-0 rounded-r-2xl bg-gradient-to-r ${color} ${revealAnim}`}
                         style={{
                           width: `${barW}%`,
+                          willChange: phase === "revealing" ? "width" : "auto",
                           boxShadow: revealedRank1 && isRank1
                             ? "0 0 28px rgba(239,68,68,0.7), 0 0 10px rgba(255,255,255,0.4)"
                             : revealedRank2 && isRank2
@@ -422,7 +438,7 @@ export default function AnnouncePage() {
                             : barW > 0 ? "0 0 10px rgba(59,130,246,0.4)" : "none",
                         }}
                       >
-                        {phase === "revealing" && barW > 3 && (
+                        {phase === "revealing" && (
                           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-[scan_1.8s_ease-in-out_infinite]" />
                         )}
                       </div>
@@ -466,13 +482,14 @@ export default function AnnouncePage() {
                     {/* 票数・% */}
                     <div className="text-right flex-1">
                       <span
+                        ref={(el) => { countRefs.current[index] = el; }}
                         className="font-mono font-black"
                         style={{
                           fontSize: "clamp(24px,2.4vw,40px)",
-                        color: revealedRank1 && isRank1 ? "#991b1b"
-                             : revealedRank2 && isRank2 ? "#9a3412"
-                             : "#be185d",
-                        textShadow: revealedRank1 && isRank1 ? "0 0 12px rgba(239,68,68,0.6)" : "none",
+                          color: revealedRank1 && isRank1 ? "#991b1b"
+                               : revealedRank2 && isRank2 ? "#9a3412"
+                               : "#be185d",
+                          textShadow: revealedRank1 && isRank1 ? "0 0 12px rgba(239,68,68,0.6)" : "none",
                         }}
                       >
                         {shownCount}

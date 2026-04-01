@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { DEFAULT_CRITERIA_LABELS } from "@/lib/types";
 
 // 桜の花びら（5枚花弁、先端に切れ込み）
@@ -82,7 +82,6 @@ export default function ReviewAnnouncePage() {
   const [flipIdx, setFlipIdx] = useState<number | null>(null);
   const [flashIdx, setFlashIdx] = useState<number | null>(null);
   const [sakuraList, setSakuraList] = useState<{ id: number; x: number; delay: number; duration: number; size: number; rotate: number; color: string }[]>([]);
-  const sakuraTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fetchData = useCallback(async () => {
     try {
       const res = await fetch("/api/review");
@@ -118,27 +117,19 @@ export default function ReviewAnnouncePage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const spawnSakura = useCallback(() => {
-    const batch = Array.from({ length: 8 }, (_, i) => ({
-      id: Date.now() + i,
+  // 全花びらを一括生成（CSS animation-delay で時間分散）→ setInterval不要
+  const startSakura = useCallback(() => {
+    const petals = Array.from({ length: 110 }, (_, i) => ({
+      id: i,
       x: Math.random() * 100,
-      delay: Math.random() * 0.8,
+      delay: Math.random() * 14,          // 0〜14秒の間に分散
       duration: 4 + Math.random() * 3.5,
       size: 20 + Math.floor(Math.random() * 24),
       rotate: Math.floor(Math.random() * 360),
       color: SAKURA_COLORS[Math.floor(Math.random() * SAKURA_COLORS.length)],
     }));
-    setSakuraList((prev) => [...prev, ...batch]);
+    setSakuraList(petals);                 // 1回のみ state 更新
   }, []);
-
-  const startSakura = useCallback(() => {
-    spawnSakura();
-    const timer = setInterval(() => { spawnSakura(); }, 800);
-    sakuraTimerRef.current = timer;
-    setTimeout(() => {
-      if (sakuraTimerRef.current) clearInterval(sakuraTimerRef.current);
-    }, 12000);
-  }, [spawnSakura]);
 
   const handleStart = () => { setPhase("revealing"); setRevealedCount(0); };
 
@@ -167,7 +158,6 @@ export default function ReviewAnnouncePage() {
   };
 
   const handleReset = () => {
-    if (sakuraTimerRef.current) clearInterval(sakuraTimerRef.current);
     setSakuraList([]);
     setFlashIdx(null);
     setPhase("standby");
