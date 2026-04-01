@@ -549,7 +549,7 @@ export default function AnnouncePage() {
             ↩ もう一度
           </button>
           <button
-            onClick={() => router.push("/admin")}
+            onClick={() => router.push("/kanri")}
             className="font-medium rounded-xl border transition-all"
             style={{ background: "rgba(255,255,255,0.6)", backdropFilter: "blur(8px)", border: "1px solid rgba(219,112,147,0.4)", color: "#9d174d", fontSize: "clamp(12px,1vw,16px)", padding: "clamp(8px,1vh,12px) clamp(20px,2vw,32px)" }}
           >
@@ -563,7 +563,7 @@ export default function AnnouncePage() {
             ← 投票ページ
           </button>
           <span style={{ fontSize: "clamp(10px,0.75vw,12px)", color: "rgba(157,23,77,0.2)" }}>|</span>
-          <button onClick={() => router.push("/admin")} className="transition-colors" style={{ fontSize: "clamp(10px,0.75vw,12px)", color: "rgba(157,23,77,0.4)" }}>
+          <button onClick={() => router.push("/kanri")} className="transition-colors" style={{ fontSize: "clamp(10px,0.75vw,12px)", color: "rgba(157,23,77,0.4)" }}>
             管理者
           </button>
         </div>

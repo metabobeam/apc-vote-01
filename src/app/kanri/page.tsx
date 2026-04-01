@@ -559,7 +559,7 @@ export default function AdminPage() {
               <div className="border-t border-dashed border-gray-200 pt-3 mt-1">
                 <button
                   type="button"
-                  onClick={() => router.push("/admin/votes")}
+                  onClick={() => router.push("/kanri/votes")}
                   className="w-full bg-rose-50 hover:bg-rose-100 border border-rose-200 hover:border-rose-300 text-rose-600 font-medium text-sm py-2.5 rounded-xl transition-all flex items-center justify-center gap-2"
                 >
                   <span>🗳️</span> 投票内容の確認・無効票削除

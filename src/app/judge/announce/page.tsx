@@ -310,7 +310,7 @@ export default function JudgeAnnouncePage() {
             🎤 発表開始
           </button>
           <a
-            href="/admin"
+            href="/kanri"
             className="text-gray-500 hover:text-gray-300 text-sm transition-colors mt-2"
           >
             ← 管理画面にもどる

@@ -240,7 +240,7 @@ export default function ReviewAnnouncePage() {
             >
               発表開始
             </button>
-            <a href="/admin" style={{ color: "rgba(255,255,255,0.3)", fontSize: "clamp(12px,1.2vw,16px)", textDecoration: "none", transition: "color 0.2s" }}
+            <a href="/kanri" style={{ color: "rgba(255,255,255,0.3)", fontSize: "clamp(12px,1.2vw,16px)", textDecoration: "none", transition: "color 0.2s" }}
               onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.6)")}
               onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}>
               ← 管理画面にもどる
@@ -389,7 +389,7 @@ export default function ReviewAnnouncePage() {
           )}
 
           <div style={{ textAlign: "center", marginTop: "clamp(8px,1.2vh,16px)", padding: "0 clamp(16px,3vw,48px)" }}>
-            <a href="/admin" style={{ color: "rgba(255,255,255,0.2)", fontSize: "clamp(10px,1vw,14px)", textDecoration: "none" }}>
+            <a href="/kanri" style={{ color: "rgba(255,255,255,0.2)", fontSize: "clamp(10px,1vw,14px)", textDecoration: "none" }}>
               ← 管理画面にもどる
             </a>
           </div>

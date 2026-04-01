@@ -338,7 +338,7 @@ export default function JudgePage() {
         {/* フッターボタン */}
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <a
-            href="/admin"
+            href="/kanri"
             className="text-gray-400 hover:text-gray-600 text-sm transition-colors flex items-center gap-1"
           >
             ← 管理画面へ戻る

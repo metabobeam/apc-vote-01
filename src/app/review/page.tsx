@@ -177,7 +177,7 @@ export default function ReviewPage() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
             <a
-              href="/admin"
+              href="/kanri"
               className="text-sm text-gray-400 hover:text-gray-700 transition-colors flex items-center gap-1"
             >
               ← 管理画面

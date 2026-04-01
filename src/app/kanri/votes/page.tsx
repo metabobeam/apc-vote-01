@@ -85,7 +85,7 @@ export default function VoteManagePage() {
             <h1 className="text-2xl font-bold gradient-text">投票内容管理</h1>
           </div>
           <button
-            onClick={() => router.push("/admin")}
+            onClick={() => router.push("/kanri")}
             className="text-slate-400 hover:text-white text-sm transition-colors"
           >
             ← 管理者へ

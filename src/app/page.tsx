@@ -169,7 +169,7 @@ export default function VotePage() {
       {/* 管理画面へリンク（右上固定） */}
       <div className="fixed top-4 right-4 z-50">
         <button
-          onClick={() => router.push("/admin")}
+          onClick={() => router.push("/kanri")}
           className="text-slate-500 hover:text-slate-300 text-xs border border-slate-700 hover:border-slate-500 bg-slate-900/80 backdrop-blur-sm px-3 py-1.5 rounded-lg transition-colors"
         >
           管理画面へ
