@@ -22,6 +22,28 @@ interface JudgeData {
   results: { productId: string; productNumber: string; description: string; judgeVoteCount: number }[];
 }
 
+interface ReviewTarget {
+  id: string;
+  name: string;
+}
+
+interface ReviewResult {
+  productId: string;
+  productNumber: string;
+  totalScore: number;
+  avgScore: number;
+  reviewCount: number;
+  scores: { judgeName: string; criterion1: number; criterion2: number; criterion3: number; total: number }[];
+}
+
+interface ReviewData {
+  judges: string[];
+  targets: ReviewTarget[];
+  criteriaLabels: [string, string, string];
+  results: ReviewResult[];
+  judgeProgress: Record<string, string[]>;
+}
+
 type AdminStep = "login" | "dashboard";
 
 export default function AdminPage() {
@@ -53,6 +75,13 @@ export default function AdminPage() {
   const [judgeData, setJudgeData] = useState<JudgeData | null>(null);
   const [showWinner, setShowWinner] = useState(false);
 
+  const [reviewData, setReviewData] = useState<ReviewData | null>(null);
+  const [reviewResetConfirm, setReviewResetConfirm] = useState<string | null>(null);
+  const [reviewResetting, setReviewResetting] = useState(false);
+  const [reviewTargets, setReviewTargets] = useState<ReviewTarget[]>([]);
+  const [newTargetName, setNewTargetName] = useState("");
+  const [criteriaLabels, setCriteriaLabels] = useState<[string, string, string]>(["", "", ""]);
+
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState("");
   const [resetting, setResetting] = useState(false);
@@ -74,12 +103,45 @@ export default function AdminPage() {
     setOptions(data.options.map((o) => ({ ...o })));
     setJudges(data.judges ?? []);
     fetchJudgeData();
+    fetchReviewData();
   };
 
   const fetchJudgeData = async () => {
     try {
       const res = await fetch("/api/judge");
       if (res.ok) setJudgeData(await res.json());
+    } catch { /* ignore */ }
+  };
+
+  const fetchReviewData = async () => {
+    try {
+      const res = await fetch("/api/review");
+      if (res.ok) {
+        const d: ReviewData = await res.json();
+        setReviewData(d);
+        setReviewTargets(d.targets ?? []);
+        if (d.criteriaLabels) setCriteriaLabels(d.criteriaLabels);
+      }
+    } catch { /* ignore */ }
+  };
+
+  const saveReviewTargets = async (targets: ReviewTarget[]) => {
+    try {
+      await fetch("/api/review", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password, targets }),
+      });
+    } catch { /* ignore */ }
+  };
+
+  const saveCriteriaLabels = async (labels: [string, string, string]) => {
+    try {
+      await fetch("/api/review", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password, criteriaLabels: labels }),
+      });
     } catch { /* ignore */ }
   };
 
@@ -182,6 +244,33 @@ export default function AdminPage() {
     }
   };
 
+  const handleReviewReset = async (target: string) => {
+    setReviewResetting(true);
+    try {
+      const body = target === "all"
+        ? { clearAll: true, password }
+        : { judgeName: target, password };
+      const res = await fetch("/api/review", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) {
+        setSaveMsg("✓ 討議班審査データをリセットしました");
+        fetchReviewData();
+      } else {
+        const d = await res.json();
+        setSaveMsg(`✗ ${d.error ?? "削除に失敗しました"}`);
+      }
+    } catch {
+      setSaveMsg("✗ 削除に失敗しました");
+    } finally {
+      setReviewResetting(false);
+      setReviewResetConfirm(null);
+      setTimeout(() => setSaveMsg(""), 3000);
+    }
+  };
+
   const handleReset = async () => {
     setResetting(true);
     try {
@@ -225,22 +314,25 @@ export default function AdminPage() {
             </div>
             <h1 className="text-2xl font-bold text-gray-800">管理者ダッシュボード</h1>
           </div>
-          {step === "dashboard" && (
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => router.push("/")}
-                className="text-gray-400 hover:text-gray-700 text-sm transition-colors"
-              >
-                ← 投票ページ
-              </button>
-              <button
-                onClick={handleLogout}
-                className="text-gray-400 hover:text-gray-600 text-xs border border-gray-300 hover:border-gray-400 px-2.5 py-1 rounded-lg transition-colors"
-              >
-                ログアウト
-              </button>
-            </div>
-          )}
+          <div className="flex flex-col items-end gap-1">
+            <span className="text-xs text-gray-400 font-mono tracking-widest">Ver 0.9.1</span>
+            {step === "dashboard" && (
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => router.push("/")}
+                  className="text-gray-400 hover:text-gray-700 text-sm transition-colors"
+                >
+                  ← 投票ページ
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="text-gray-400 hover:text-gray-600 text-xs border border-gray-300 hover:border-gray-400 px-2.5 py-1 rounded-lg transition-colors"
+                >
+                  ログアウト
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Login */}
@@ -484,15 +576,8 @@ export default function AdminPage() {
 
           {/* ── 審査員管理 ── */}
           <div className="bg-white border-2 border-indigo-100 rounded-2xl p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center mb-4">
               <h2 className="text-base font-bold text-gray-800">⚖️ 審査員管理</h2>
-              <button
-                type="button"
-                onClick={() => router.push("/judge")}
-                className="text-xs bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-600 px-3 py-1.5 rounded-lg transition-colors"
-              >
-                審査員投票ページ →
-              </button>
             </div>
 
             {/* 審査員追加 */}
@@ -586,17 +671,37 @@ export default function AdminPage() {
             )}
           </div>
 
+          {/* 審査員投票ページへのリンク */}
+          <div className="mt-3 flex justify-end">
+            <button
+              type="button"
+              onClick={() => router.push("/judge")}
+              className="text-sm bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-600 font-medium px-5 py-2.5 rounded-xl transition-colors flex items-center gap-2 shadow-sm"
+            >
+              ⚖️ 審査員投票ページへ →
+            </button>
+          </div>
+
           {/* ── 優勝決定画面 ── */}
-          <div className="mt-4 bg-white border-2 border-amber-100 rounded-2xl p-6 shadow-sm">
+          <div className="mt-8 bg-white border-2 border-amber-100 rounded-2xl p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base font-bold text-gray-800">🏆 優勝決定</h2>
-              <button
-                type="button"
-                onClick={() => { fetchJudgeData(); setShowWinner(true); }}
-                className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-bold text-sm px-4 py-2 rounded-xl transition-all shadow-md"
-              >
-                結果表示
-              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => { fetchJudgeData(); setShowWinner(true); }}
+                  className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-bold text-sm px-4 py-2 rounded-xl transition-all shadow-md"
+                >
+                  結果確認
+                </button>
+                <button
+                  type="button"
+                  onClick={() => router.push("/judge/announce")}
+                  className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold text-sm px-4 py-2 rounded-xl transition-all shadow-md"
+                >
+                  🎤 審査発表へ
+                </button>
+              </div>
             </div>
 
             {judgeData && (
@@ -641,6 +746,257 @@ export default function AdminPage() {
               );
             })()}
           </div>
+
+          {/* ────────────── 討議班審査 セクション区切り ────────────── */}
+          <div className="mt-10 mb-6 flex items-center gap-4">
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
+            <span className="text-xs font-bold text-gray-400 tracking-widest uppercase px-2 whitespace-nowrap">討議班審査</span>
+            <div className="flex-1 h-px bg-gradient-to-l from-transparent via-gray-300 to-transparent" />
+          </div>
+
+          {/* ── 討議班審査管理カード ── */}
+          <div className="bg-white border-2 border-teal-100 rounded-2xl p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-base font-bold text-gray-800">📋 討議班審査管理</h2>
+              <button
+                type="button"
+                onClick={fetchReviewData}
+                className="text-xs text-gray-400 hover:text-gray-600 border border-gray-200 px-2.5 py-1 rounded-lg transition-colors"
+              >
+                更新
+              </button>
+            </div>
+
+            {/* 討議班リスト管理 */}
+            <div className="mb-5">
+              <p className="text-xs font-semibold text-gray-500 mb-2">審査対象（討議班）</p>
+              <div className="flex gap-2 mb-3">
+                <input
+                  type="text"
+                  value={newTargetName}
+                  onChange={(e) => setNewTargetName(e.target.value)}
+                  placeholder="班名を入力（例：1班、Aチーム）"
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-teal-400"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const name = newTargetName.trim();
+                      if (name && !reviewTargets.some((t) => t.name === name)) {
+                        const next = [...reviewTargets, { id: uuidv4(), name }];
+                        setReviewTargets(next);
+                        setNewTargetName("");
+                        saveReviewTargets(next);
+                      }
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const name = newTargetName.trim();
+                    if (name && !reviewTargets.some((t) => t.name === name)) {
+                      const next = [...reviewTargets, { id: uuidv4(), name }];
+                      setReviewTargets(next);
+                      setNewTargetName("");
+                      saveReviewTargets(next);
+                    }
+                  }}
+                  className="px-3 py-2 bg-teal-600 hover:bg-teal-700 text-white text-sm rounded-lg transition-colors"
+                >
+                  追加
+                </button>
+              </div>
+              {reviewTargets.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {reviewTargets.map((t) => (
+                    <span key={t.id} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm border bg-teal-50 border-teal-200 text-teal-700">
+                      {t.name}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const next = reviewTargets.filter((x) => x.id !== t.id);
+                          setReviewTargets(next);
+                          saveReviewTargets(next);
+                        }}
+                        className="text-teal-400 hover:text-red-500 transition-colors"
+                      >×</button>
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-gray-400">討議班が未登録です</p>
+              )}
+              <p className="text-xs text-gray-400 mt-2">※ 追加・削除は即座に保存されます</p>
+            </div>
+
+            {/* 審査項目名編集 */}
+            <div className="mb-5">
+              <p className="text-xs font-semibold text-gray-500 mb-2">審査項目名</p>
+              <div className="flex flex-col gap-2">
+                {([0, 1, 2] as const).map((i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-gray-400 w-10 shrink-0">項目{i + 1}</span>
+                    <input
+                      type="text"
+                      value={criteriaLabels[i]}
+                      onChange={(e) => {
+                        const next: [string, string, string] = [...criteriaLabels] as [string, string, string];
+                        next[i] = e.target.value;
+                        setCriteriaLabels(next);
+                      }}
+                      onBlur={() => saveCriteriaLabels(criteriaLabels)}
+                      className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm text-gray-800 focus:outline-none focus:border-teal-400"
+                      placeholder={`項目${i + 1}の名前`}
+                    />
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-gray-400 mt-1.5">※ 入力欄を離れると自動保存されます</p>
+            </div>
+
+            <div className="border-t border-gray-100 pt-5">
+              {/* 入力進捗 */}
+              {reviewData && reviewData.judges.length > 0 && reviewTargets.length > 0 && (
+                <div className="mb-4">
+                  <p className="text-xs font-semibold text-gray-500 mb-2">入力進捗</p>
+                  <div className="flex flex-col gap-1.5">
+                    {reviewData.judges.map((judge) => {
+                      const done = (reviewData.judgeProgress[judge] ?? []).length;
+                      const total = reviewTargets.length;
+                      const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+                      return (
+                        <div key={judge} className="flex items-center gap-3">
+                          <span className="text-sm text-gray-700 w-24 truncate">{judge}</span>
+                          <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-teal-400 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                          </div>
+                          <span className="text-xs text-gray-500 w-10 text-right">{done}/{total}</span>
+                          {done > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setReviewResetConfirm(judge)}
+                              className="text-xs text-rose-400 hover:text-rose-600 transition-colors"
+                            >
+                              取消
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* 集計結果 */}
+              {reviewData && reviewData.results.some((r) => r.reviewCount > 0) && (() => {
+                // 班ごとに項目別合計を計算
+                const withCriteria = reviewData.results.map((r) => ({
+                  ...r,
+                  c1: r.scores.reduce((s, x) => s + x.criterion1, 0),
+                  c2: r.scores.reduce((s, x) => s + x.criterion2, 0),
+                  c3: r.scores.reduce((s, x) => s + x.criterion3, 0),
+                }));
+
+                // 項目ごとに降順ソート（同点は合計で決める）
+                const criteriaKeys = ["c1", "c2", "c3"] as const;
+
+                return (
+                  <div className="mb-4 flex flex-col gap-4">
+                    <p className="text-xs font-semibold text-gray-500">採点集計（項目別ランキング）</p>
+                    {criteriaKeys.map((key, ki) => {
+                      const label = reviewData.criteriaLabels?.[ki] || `項目${ki + 1}`;
+                      const sorted = [...withCriteria].sort((a, b) =>
+                        b[key] !== a[key] ? b[key] - a[key] : b.totalScore - a.totalScore
+                      );
+                      const maxVal = sorted[0]?.[key] ?? 0;
+                      return (
+                        <div key={key}>
+                          <p className="text-xs font-bold mb-1.5 text-gray-600">
+                            <span className="text-gray-400 mr-1">項目{ki + 1}</span>{label}
+                          </p>
+                          <div className="flex flex-col gap-1.5">
+                            {sorted.map((r, idx) => {
+                              const val = r[key];
+                              const n = r.reviewCount;
+                              const pct = maxVal > 0 ? (val / maxVal) * 100 : 0;
+                              const isTop = idx === 0;
+                              return (
+                                <div key={r.productId} className={`rounded-xl border px-3 py-2 ${isTop ? "bg-orange-50 border-orange-200" : "bg-gray-50 border-gray-200"}`}>
+                                  <div className="flex items-center justify-between mb-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className={`text-xs font-black w-4 text-center ${isTop ? "text-orange-500" : "text-gray-400"}`}>{idx + 1}</span>
+                                      <span className="text-sm font-bold text-gray-800">{r.productNumber}</span>
+                                      {n > 0 && <span className="text-xs text-gray-400">合計 {r.totalScore}pt</span>}
+                                    </div>
+                                    <div className="flex items-baseline gap-0.5">
+                                      <span className={`text-lg font-black ${isTop ? "text-orange-600" : "text-gray-700"}`}>{val}</span>
+                                      <span className="text-xs text-gray-400">/{n * 5}</span>
+                                    </div>
+                                  </div>
+                                  <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                    <div
+                                      className={`h-full rounded-full ${isTop ? "bg-orange-400" : "bg-blue-900"}`}
+                                      style={{ width: `${pct}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+
+              {(!reviewData || reviewData.results.every((r) => r.reviewCount === 0)) && reviewTargets.length > 0 && (
+                <p className="text-sm text-gray-400 mb-4">まだ採点データがありません</p>
+              )}
+
+              {/* 全データリセット確認 */}
+              {reviewResetConfirm && (
+                <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 mb-4">
+                  <p className="text-rose-600 text-sm text-center mb-3 font-medium">
+                    {reviewResetConfirm === "all"
+                      ? "⚠️ 討議班審査の全採点データを削除します"
+                      : `⚠️「${reviewResetConfirm}」の採点データを削除します`}
+                  </p>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => setReviewResetConfirm(null)} className="flex-1 bg-white border border-gray-300 text-gray-600 py-2 rounded-lg text-sm">キャンセル</button>
+                    <button type="button" onClick={() => handleReviewReset(reviewResetConfirm)} disabled={reviewResetting} className="flex-1 bg-rose-500 border border-rose-500 text-white py-2 rounded-lg text-sm font-bold transition-all disabled:opacity-50">
+                      {reviewResetting ? "削除中..." : "削除する"}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-start">
+                <button type="button" onClick={() => setReviewResetConfirm("all")} className="text-xs text-rose-400 hover:text-rose-600 border border-rose-200 hover:border-rose-300 px-3 py-1.5 rounded-lg transition-colors">
+                  採点データを全削除
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* 討議班審査ページ・表彰発表ページへのリンク */}
+          <div className="mt-3 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => router.push("/review")}
+              className="text-sm bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-700 font-medium px-4 py-2.5 rounded-xl transition-colors flex items-center gap-2 shadow-sm"
+            >
+              📋 討議班審査ページへ →
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push("/review/announce")}
+              className="text-sm bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-white font-bold px-4 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-2"
+            >
+              🏆 表彰発表へ →
+            </button>
+          </div>
+
           </>
         )}
       </div>

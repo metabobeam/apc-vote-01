@@ -303,7 +303,7 @@ export default function JudgeAnnouncePage() {
       </div>
 
       {/* 待機画面 */}
-      {phase === "standby" && (
+        {phase === "standby" && (
         <div className="relative z-10 flex flex-col items-center justify-center flex-1 gap-6 text-center">
           <p className="text-amber-100/80 text-base">
             審査員 <span className="text-white font-black text-xl">{orderedVotes.length}</span> 名の投票が完了しています
@@ -313,6 +313,12 @@ export default function JudgeAnnouncePage() {
             style={{ background:"linear-gradient(135deg,#f59e0b,#dc2626)", boxShadow:"0 0 50px rgba(245,158,11,0.5),0 8px 32px rgba(0,0,0,0.5)", letterSpacing:"0.1em" }}>
             🎤 発表開始
           </button>
+          <a
+            href="/admin"
+            className="text-gray-500 hover:text-gray-300 text-sm transition-colors mt-2"
+          >
+            ← 管理画面にもどる
+          </a>
         </div>
       )}
 

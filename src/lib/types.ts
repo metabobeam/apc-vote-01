@@ -50,6 +50,52 @@ export interface VoteStats {
   lastUpdated: string;
 }
 
+// ─── 討議班審査（投票と独立） ─────────────────────────────────────────────
+
+/** 討議班審査の対象（班・グループ） */
+export interface ReviewTarget {
+  id: string;
+  name: string; // 班名
+}
+
+/** 討議班審査の設定（投票設定とは別管理） */
+export interface ReviewConfig {
+  targets: ReviewTarget[];
+  criteriaLabels: [string, string, string]; // 項目1〜3のラベル
+}
+
+export const DEFAULT_CRITERIA_LABELS: [string, string, string] = [
+  "創業の精神・理念・価値基準・行動規範との結びつけ",
+  "表面的な結論で終わらず、考えを掘り下げた痕跡",
+  "回答の中に、新しい視点・立場・考え方が併記されているか",
+];
+
+export const DEFAULT_REVIEW_CONFIG: ReviewConfig = {
+  targets: [],
+  criteriaLabels: [...DEFAULT_CRITERIA_LABELS],
+};
+
+export interface ReviewRecord {
+  id: string;
+  judgeName: string;
+  productId: string;
+  criterion1: number; // 1〜5
+  criterion2: number;
+  criterion3: number;
+  total: number;      // 合計
+  timestamp: string;
+}
+
+export interface ReviewResult {
+  productId: string;
+  productNumber: string;
+  description: string;
+  totalScore: number;
+  avgScore: number;
+  reviewCount: number;
+  scores: { judgeName: string; criterion1: number; criterion2: number; criterion3: number; total: number }[];
+}
+
 export const DEFAULT_CONFIG: VoteConfig = {
   title: "優秀作品投票",
   deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
