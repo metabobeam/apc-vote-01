@@ -553,7 +553,7 @@ export default function AdminPage() {
                   onClick={() => router.push("/announce")}
                   className="flex-1 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-sm py-2.5 rounded-xl transition-all shadow-md"
                 >
-                  🎬 結果発表へ
+                  🎬 社員投票 結果発表へ
                 </button>
               </div>
               <div className="border-t border-dashed border-gray-200 pt-3 mt-1">
