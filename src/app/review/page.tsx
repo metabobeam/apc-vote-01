@@ -56,6 +56,12 @@ export default function ReviewPage() {
   const [savedTargets, setSavedTargets] = useState<Set<string>>(new Set());
   const [errorMsgs, setErrorMsgs] = useState<Record<string, string>>({});
 
+  // リセット用state
+  const [resetTarget, setResetTarget] = useState<"all" | string | null>(null); // "all" or judgeName
+  const [resetPassword, setResetPassword] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetMsg, setResetMsg] = useState("");
+
   const fetchData = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     else setRefreshing(true);
@@ -159,6 +165,36 @@ export default function ReviewPage() {
     }
   };
 
+  const handleReset = async () => {
+    if (!resetTarget) return;
+    setResetLoading(true);
+    setResetMsg("");
+    try {
+      const body = resetTarget === "all"
+        ? { clearAll: true, password: resetPassword }
+        : { judgeName: resetTarget, password: resetPassword };
+      const res = await fetch("/api/review", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) {
+        setResetMsg("✓ リセットしました");
+        setResetTarget(null);
+        setResetPassword("");
+        await fetchData();
+      } else {
+        const d = await res.json();
+        setResetMsg(`✗ ${d.error ?? "削除に失敗しました"}`);
+      }
+    } catch {
+      setResetMsg("✗ 通信エラーが発生しました");
+    } finally {
+      setResetLoading(false);
+      setTimeout(() => setResetMsg(""), 3000);
+    }
+  };
+
   // 降順（登録順の逆）
   const sortedTargets = data ? [...data.targets].reverse() : [];
 
@@ -209,30 +245,56 @@ export default function ReviewPage() {
                   const total = data.targets.length;
                   const done = total > 0 && submittedCount === total;
                   return (
-                    <button
-                      key={judge}
-                      onClick={() => handleSelectJudge(judge)}
-                      className={`flex items-center justify-between px-4 py-3 rounded-xl border-2 text-left transition-all ${
-                        done
-                          ? "border-teal-300 bg-teal-50 hover:bg-teal-100"
-                          : "border-gray-200 bg-white hover:border-teal-400 hover:bg-teal-50"
-                      }`}
-                    >
-                      <span className="font-medium text-gray-800">{judge}</span>
-                      <span
-                        className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                    <div key={judge} className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleSelectJudge(judge)}
+                        className={`flex-1 flex items-center justify-between px-4 py-3 rounded-xl border-2 text-left transition-all ${
                           done
-                            ? "bg-teal-200 text-teal-700"
-                            : submittedCount > 0
-                            ? "bg-yellow-200 text-yellow-700"
-                            : "bg-gray-200 text-gray-500"
+                            ? "border-teal-300 bg-teal-50 hover:bg-teal-100"
+                            : "border-gray-200 bg-white hover:border-teal-400 hover:bg-teal-50"
                         }`}
                       >
-                        {done ? "✓ 完了" : submittedCount > 0 ? `${submittedCount}/${total}` : "未入力"}
-                      </span>
-                    </button>
+                        <span className="font-medium text-gray-800">{judge}</span>
+                        <span
+                          className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                            done
+                              ? "bg-teal-200 text-teal-700"
+                              : submittedCount > 0
+                              ? "bg-yellow-200 text-yellow-700"
+                              : "bg-gray-200 text-gray-500"
+                          }`}
+                        >
+                          {done ? "✓ 完了" : submittedCount > 0 ? `${submittedCount}/${total}` : "未入力"}
+                        </span>
+                      </button>
+                      {/* 審査員ごとリセットボタン（採点データがある場合のみ表示） */}
+                      {submittedCount > 0 && (
+                        <button
+                          onClick={() => { setResetTarget(judge); setResetPassword(""); setResetMsg(""); }}
+                          className="flex-shrink-0 text-xs text-rose-400 hover:text-rose-600 border border-rose-300 hover:border-rose-500 bg-rose-50 hover:bg-rose-100 px-2.5 py-2 rounded-xl transition-all"
+                          title={`${judge}の採点をリセット`}
+                        >
+                          リセット
+                        </button>
+                      )}
+                    </div>
                   );
                 })}
+
+                {/* 全データリセット */}
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  {resetMsg && (
+                    <p className={`text-sm mb-2 ${resetMsg.startsWith("✓") ? "text-teal-600" : "text-rose-500"}`}>
+                      {resetMsg}
+                    </p>
+                  )}
+                  <button
+                    onClick={() => { setResetTarget("all"); setResetPassword(""); setResetMsg(""); }}
+                    className="text-xs text-rose-400 hover:text-rose-600 border border-rose-200 hover:border-rose-400 bg-white hover:bg-rose-50 px-3 py-2 rounded-xl transition-all"
+                  >
+                    🗑 全採点データをリセット
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -388,6 +450,54 @@ export default function ReviewPage() {
           </button>
         </div>
       </div>
+
+      {/* リセット確認モーダル */}
+      {resetTarget && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm">
+            <h3 className="text-base font-bold text-gray-800 mb-1">
+              {resetTarget === "all" ? "全採点データをリセット" : `「${resetTarget}」の採点をリセット`}
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">
+              {resetTarget === "all"
+                ? "全審査員の採点データが削除されます。"
+                : `${resetTarget}の全採点データが削除されます。`}
+              この操作は取り消せません。
+            </p>
+            <div className="mb-4">
+              <label className="block text-xs text-gray-500 mb-1.5">管理者パスワード</label>
+              <input
+                type="password"
+                value={resetPassword}
+                onChange={(e) => setResetPassword(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleReset()}
+                placeholder="パスワードを入力"
+                className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-400 focus:ring-1 focus:ring-rose-200"
+                autoFocus
+              />
+            </div>
+            {resetMsg && (
+              <p className="text-sm text-rose-500 mb-3">{resetMsg}</p>
+            )}
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setResetTarget(null); setResetPassword(""); setResetMsg(""); }}
+                disabled={resetLoading}
+                className="flex-1 py-2.5 rounded-xl border border-gray-300 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-all disabled:opacity-50"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleReset}
+                disabled={resetLoading || !resetPassword}
+                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {resetLoading ? "削除中..." : "削除する"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
