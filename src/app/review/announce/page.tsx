@@ -434,6 +434,28 @@ export default function ReviewAnnouncePage() {
               ← 管理画面にもどる
             </a>
           </div>
+
+          {/* 右下固定：最初に戻るボタン */}
+          <div style={{ position: "fixed", bottom: "18px", right: "22px", zIndex: 30 }}>
+            <button
+              onClick={handleReset}
+              style={{
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.12)",
+                borderRadius: "20px",
+                color: "rgba(255,255,255,0.25)",
+                fontSize: "11px",
+                padding: "5px 14px",
+                cursor: "pointer",
+                letterSpacing: "0.05em",
+                transition: "color 0.2s, background 0.2s",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.color = "rgba(255,255,255,0.6)"; e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}
+              onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.25)"; e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
+            >
+              ↩ 最初に戻る
+            </button>
+          </div>
         </div>
       )}
 
