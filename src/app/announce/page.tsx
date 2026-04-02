@@ -459,18 +459,14 @@ export default function AnnouncePage() {
                         {phase === "revealing" && (
                           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-[scan_1.8s_ease-in-out_infinite]" />
                         )}
-                        {/* 先端に追従するカウント数値 */}
+                        {/* バー内側右端のカウント数値 */}
                         <span
                           ref={(el) => { countRefs.current[index] = el; }}
-                          className="absolute top-1/2 -translate-y-1/2 font-mono font-black pointer-events-none whitespace-nowrap"
+                          className="absolute top-1/2 -translate-y-1/2 right-3 font-mono font-black pointer-events-none whitespace-nowrap"
                           style={{
-                            left: "100%",
-                            paddingLeft: "clamp(4px,0.4vw,8px)",
-                            fontSize: "clamp(18px,2vw,32px)",
-                            color: revealedRank1 && isRank1 ? "#991b1b"
-                                 : revealedRank2 && isRank2 ? "#9a3412"
-                                 : "#be185d",
-                            textShadow: revealedRank1 && isRank1 ? "0 0 12px rgba(239,68,68,0.6)" : "none",
+                            fontSize: "clamp(16px,1.8vw,28px)",
+                            color: "rgba(255,255,255,0.95)",
+                            textShadow: "0 1px 6px rgba(0,0,0,0.5)",
                             opacity: phase === "standby" ? 0 : 1,
                           }}
                         >
