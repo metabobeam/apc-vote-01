@@ -18,7 +18,14 @@ export async function GET() {
     };
 
     const json = JSON.stringify(backup, null, 2);
-    const filename = `apc-vote-backup-${new Date().toISOString().slice(0, 19).replace(/[T:]/g, "-")}.json`;
+    const jst = new Date(Date.now() + 9 * 60 * 60 * 1000);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const yyyy = jst.getUTCFullYear();
+    const mm   = pad(jst.getUTCMonth() + 1);
+    const dd   = pad(jst.getUTCDate());
+    const hh   = pad(jst.getUTCHours());
+    const min  = pad(jst.getUTCMinutes());
+    const filename = `apc-vote-backup-${yyyy}${mm}${dd}-${hh}${min}.json`;
 
     return new NextResponse(json, {
       status: 200,
