@@ -534,9 +534,9 @@ export default function AnnouncePage() {
               style={{
                 fontSize: "clamp(14px,1.4vw,22px)",
                 padding: "clamp(10px,1.2vh,16px) clamp(24px,2.5vw,40px)",
-                background: "linear-gradient(135deg, #ec4899, #db2777)",
-                color: "#fff",
-                boxShadow: "0 0 24px rgba(236,72,153,0.6), 0 0 48px rgba(219,39,119,0.3), inset 0 1px 0 rgba(255,255,255,0.3)",
+                background: "linear-gradient(135deg, #1a1a1a, #000000)",
+                  color: "#fff",
+                  boxShadow: "0 0 20px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1)",
               }}
             >
               <PlayIcon />
