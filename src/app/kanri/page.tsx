@@ -993,7 +993,7 @@ export default function AdminPage() {
               onClick={() => router.push("/review/announce")}
               className="text-sm bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-white font-bold px-4 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-2"
             >
-              🏆 表彰発表へ →
+              🏆 討議班3賞発表 →
             </button>
           </div>
 
