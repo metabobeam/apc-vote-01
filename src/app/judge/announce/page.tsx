@@ -457,24 +457,31 @@ export default function JudgeAnnouncePage() {
                             {/* 中央カラーエリア */}
                             <div style={{ position:"absolute", left:"11%", right:"11%", top:0, bottom:0, display:"flex", flexDirection:"column" }}>
                               <div style={{ height:"10px", background:"linear-gradient(180deg,#c8900a,#7a5200)", borderBottom:"1px solid #ffe066" }} />
-                              <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"12px 0", background:color.bg, position:"relative", overflow:"hidden" }}>
+                              <div style={{ flex:1, minHeight:0, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"8px 0", background:color.bg, position:"relative", overflow:"hidden" }}>
                                 <div style={{ position:"absolute", inset:0, pointerEvents:"none", background:"linear-gradient(170deg,rgba(255,255,255,0.18) 0%,transparent 50%)" }} />
-                                <div style={{ display:"flex", flexDirection:"row-reverse", alignItems:"center", justifyContent:"center", gap:"4px", position:"relative", zIndex:1, overflow:"hidden", maxHeight:"100%" }}>
+                                <div style={{ display:"flex", flexDirection:"row-reverse", alignItems:"center", justifyContent:"center", gap:"4px", position:"relative", zIndex:1, overflow:"hidden", height:"100%", maxHeight:"100%" }}>
                                   {(candidate?.productNumber ?? "").split("\n").map((line, li) => {
-                                    const isLong = li === 0 && line.length >= 13;
+                                    const len = line.length;
+                                    let fontSize: string;
+                                    if (li === 1) {
+                                      // 左列（組名）
+                                      fontSize = "clamp(15px,2.3vw,27px)";
+                                    } else {
+                                      // 右列（タイトル）：文字数に応じて縮小
+                                      if (len >= 18) fontSize = "clamp(8px,1.1vw,13px)";
+                                      else if (len >= 13) fontSize = "clamp(10px,1.5vw,18px)";
+                                      else fontSize = "clamp(22px,3.3vw,39px)";
+                                    }
                                     return (
                                       <p key={li} style={{
-                                        fontWeight:900, color:"#fff", lineHeight:1.4, margin:0,
+                                        fontWeight:900, color:"#fff", lineHeight:1.35, margin:0,
                                         writingMode:"vertical-rl", textOrientation:"mixed",
-                                        fontSize: li === 1
-                                          ? "clamp(15px,2.3vw,27px)"
-                                          : isLong
-                                            ? "clamp(15px,2.3vw,27px)"
-                                            : "clamp(22px,3.3vw,39px)",
-                                        letterSpacing:"0.08em",
+                                        fontSize,
+                                        letterSpacing:"0.06em",
                                         textShadow:"0 2px 8px rgba(0,0,0,0.6),0 0 20px rgba(255,255,255,0.4)",
                                         whiteSpace:"nowrap",
                                         overflow:"hidden",
+                                        maxHeight:"100%",
                                       }}>
                                         {line}
                                       </p>
