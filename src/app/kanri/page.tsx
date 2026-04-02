@@ -414,12 +414,27 @@ export default function AdminPage() {
                 </div>
                 <div>
                   <label className="block text-gray-500 text-xs mb-1.5 tracking-wide">締め切り日時</label>
-                  <input
-                    type="datetime-local"
-                    value={deadline}
-                    onChange={(e) => setDeadline(e.target.value)}
-                    className="w-full bg-white border border-gray-300 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 rounded-xl px-4 py-2.5 text-gray-800 outline-none transition-all text-sm"
-                  />
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="datetime-local"
+                      value={deadline}
+                      onChange={(e) => setDeadline(e.target.value)}
+                      className="flex-1 bg-white border border-gray-300 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 rounded-xl px-4 py-2.5 text-gray-800 outline-none transition-all text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const d = new Date(deadline);
+                        d.setMinutes(d.getMinutes() + 1);
+                        const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+                          .toISOString().slice(0, 16);
+                        setDeadline(local);
+                      }}
+                      className="px-3 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white text-sm rounded-xl transition-colors whitespace-nowrap font-bold"
+                    >
+                      +1分
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-gray-500 text-xs mb-2 tracking-wide">投票択数</label>

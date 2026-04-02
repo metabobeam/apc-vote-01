@@ -90,7 +90,9 @@ export default function CountdownTimer({ deadline, onExpired }: CountdownTimerPr
         </div>
         {/* 数字 */}
         <div className="flex gap-2 sm:gap-3">
-          <TimeUnit value={pad(timeLeft.days * 24 + timeLeft.hours)} label="時間" urgent={isUrgent} />
+          {!isUrgent && (
+            <TimeUnit value={pad(timeLeft.days * 24 + timeLeft.hours)} label="時間" urgent={isUrgent} />
+          )}
           <TimeUnit value={pad(timeLeft.minutes)} label="分" urgent={isUrgent} />
           <TimeUnit value={pad(timeLeft.seconds)} label="秒" urgent={isUrgent} />
         </div>
