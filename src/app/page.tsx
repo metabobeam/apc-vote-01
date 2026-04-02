@@ -21,6 +21,7 @@ export default function VotePage() {
   const [config, setConfig] = useState<PublicConfig | null>(null);
   const [step, setStep] = useState<Step>("input");
   const [employeeNumber, setEmployeeNumber] = useState("");
+  const [groupName, setGroupName] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -60,6 +61,10 @@ export default function VotePage() {
     e.preventDefault();
     if (!employeeNumber.trim()) {
       setError("社員番号を入力してください");
+      return;
+    }
+    if (!groupName.trim()) {
+      setError("所属組を入力してください");
       return;
     }
     setError("");
@@ -103,7 +108,7 @@ export default function VotePage() {
       const res = await fetch("/api/vote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ employeeNumber, selectedProductIds: selectedIds }),
+        body: JSON.stringify({ employeeNumber, groupName, selectedProductIds: selectedIds }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -117,6 +122,7 @@ export default function VotePage() {
         .map((o) => o.productNumber) ?? [];
       const cookieData: VoteCookieData = {
         employeeNumber,
+        groupName,
         selectedProductIds: selectedIds,
         productNumbers,
         timestamp: new Date().toISOString(),
@@ -134,6 +140,7 @@ export default function VotePage() {
   const handleBackToTop = () => {
     setStep("input");
     setEmployeeNumber("");
+    setGroupName("");
     setSelectedIds([]);
     setError("");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -210,6 +217,10 @@ export default function VotePage() {
                   </span>
                   <span className="text-slate-600 text-xs">|</span>
                   <span className="text-slate-400 text-xs">
+                    所属組: <span className="text-slate-300 font-mono">{myVote.groupName}</span>
+                  </span>
+                  <span className="text-slate-600 text-xs">|</span>
+                  <span className="text-slate-400 text-xs">
                     投票作品:{" "}
                     {myVote.productNumbers.map((pn, i) => (
                       <span key={i} className="text-emerald-300 font-mono font-bold whitespace-pre-line">
@@ -253,17 +264,33 @@ export default function VotePage() {
               <form onSubmit={handleEmployeeSubmit} className="flex flex-col gap-6">
                 <div>
                   <label className="block text-slate-300 text-sm font-semibold mb-2 tracking-wide">
-                    <span className="text-indigo-400">STEP 1</span>&nbsp; 社員番号を入力
+                    <span className="text-indigo-400">STEP 1</span>&nbsp; 情報を入力
                   </label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={employeeNumber}
-                    onChange={(e) => setEmployeeNumber(normalizeEmployeeNumber(e.target.value))}
-                    placeholder="例: 12345"
-                    className="w-full bg-slate-800/80 border border-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 outline-none transition-all text-sm sm:text-base"
-                    autoComplete="off"
-                  />
+                  <div className="flex flex-col gap-3">
+                    <div>
+                      <p className="text-slate-400 text-xs mb-1.5">社員番号</p>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={employeeNumber}
+                        onChange={(e) => setEmployeeNumber(normalizeEmployeeNumber(e.target.value))}
+                        placeholder="例: 12345"
+                        className="w-full bg-slate-800/80 border border-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 outline-none transition-all text-sm sm:text-base"
+                        autoComplete="off"
+                      />
+                    </div>
+                    <div>
+                      <p className="text-slate-400 text-xs mb-1.5">所属組</p>
+                      <input
+                        type="text"
+                        value={groupName}
+                        onChange={(e) => setGroupName(e.target.value)}
+                        placeholder="例: 鷺組"
+                        className="w-full bg-slate-800/80 border border-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 outline-none transition-all text-sm sm:text-base"
+                        autoComplete="off"
+                      />
+                    </div>
+                  </div>
                 </div>
                 {error && <p className="text-red-400 text-sm">{error}</p>}
                 <button
@@ -281,6 +308,7 @@ export default function VotePage() {
                 <div>
                   <p className="text-slate-400 text-xs mb-1">
                     社員番号: <span className="text-indigo-300 font-mono">{employeeNumber}</span>
+                    　所属組: <span className="text-indigo-300 font-mono">{groupName}</span>
                   </p>
                   <div className="flex items-center justify-between mb-4">
                     <label className="text-slate-300 text-sm font-semibold tracking-wide">
@@ -375,6 +403,11 @@ export default function VotePage() {
                   <div className="flex justify-between items-center">
                     <span className="text-slate-400 text-sm">社員番号</span>
                     <span className="text-white font-mono font-bold">{employeeNumber}</span>
+                  </div>
+                  <div className="border-t border-slate-700" />
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400 text-sm">所属組</span>
+                    <span className="text-white font-mono font-bold">{groupName}</span>
                   </div>
                   <div className="border-t border-slate-700" />
                   <div>

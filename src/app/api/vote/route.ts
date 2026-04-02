@@ -5,13 +5,14 @@ import { dbGetConfig, dbSaveVote } from "@/lib/db";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { employeeNumber, selectedProductIds } = body as {
+    const { employeeNumber, groupName, selectedProductIds } = body as {
       employeeNumber: string;
+      groupName: string;
       selectedProductIds: string[];
     };
 
-    if (!employeeNumber || !selectedProductIds || !Array.isArray(selectedProductIds)) {
-      return NextResponse.json({ error: "社員番号と選択作品は必須です" }, { status: 400 });
+    if (!employeeNumber || !groupName || !selectedProductIds || !Array.isArray(selectedProductIds)) {
+      return NextResponse.json({ error: "社員番号・所属組・選択作品は必須です" }, { status: 400 });
     }
 
     const config = dbGetConfig();
@@ -40,6 +41,7 @@ export async function POST(request: NextRequest) {
     const result = dbSaveVote({
       id: uuidv4(),
       employeeNumber,
+      groupName: groupName ?? "",
       selectedProductIds,
       timestamp: new Date().toISOString(),
     });

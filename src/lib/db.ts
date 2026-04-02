@@ -23,7 +23,16 @@ export function getDb(): Database.Database {
   _db.pragma("busy_timeout = 5000");
 
   initSchema(_db);
+  runMigrations(_db);
   return _db;
+}
+
+function runMigrations(db: Database.Database) {
+  // group_name カラムが存在しない場合のみ追加（既存DBへの対応）
+  const cols = db.prepare("PRAGMA table_info(votes)").all() as { name: string }[];
+  if (!cols.find((c) => c.name === "group_name")) {
+    db.exec("ALTER TABLE votes ADD COLUMN group_name TEXT NOT NULL DEFAULT ''");
+  }
 }
 
 function initSchema(db: Database.Database) {
@@ -36,6 +45,7 @@ function initSchema(db: Database.Database) {
     CREATE TABLE IF NOT EXISTS votes (
       id                TEXT PRIMARY KEY,
       employee_number   TEXT NOT NULL,
+      group_name        TEXT NOT NULL DEFAULT '',
       selected_ids      TEXT NOT NULL,  -- JSON配列
       timestamp         TEXT NOT NULL
     );
@@ -103,6 +113,7 @@ export function dbSaveConfig(config: VoteConfig): void {
 export interface VoteRow {
   id: string;
   employeeNumber: string;
+  groupName: string;
   selectedProductIds: string[];
   timestamp: string;
 }
@@ -112,12 +123,14 @@ export function dbGetVotes(): VoteRow[] {
   const rows = db.prepare("SELECT * FROM votes ORDER BY timestamp DESC").all() as {
     id: string;
     employee_number: string;
+    group_name: string;
     selected_ids: string;
     timestamp: string;
   }[];
   return rows.map((r) => ({
     id: r.id,
     employeeNumber: r.employee_number,
+    groupName: r.group_name ?? "",
     selectedProductIds: JSON.parse(r.selected_ids) as string[],
     timestamp: r.timestamp,
   }));
@@ -145,10 +158,11 @@ export function dbSaveVote(vote: VoteRow): { ok: boolean; error?: string } {
     if (existing) return { ok: false, error: "この社員番号はすでに投票済みです" };
 
     db.prepare(
-      "INSERT INTO votes (id, employee_number, selected_ids, timestamp) VALUES (?, ?, ?, ?)"
+      "INSERT INTO votes (id, employee_number, group_name, selected_ids, timestamp) VALUES (?, ?, ?, ?, ?)"
     ).run(
       vote.id,
       vote.employeeNumber,
+      vote.groupName ?? "",
       JSON.stringify(vote.selectedProductIds),
       vote.timestamp
     );

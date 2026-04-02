@@ -1,5 +1,6 @@
 export interface VoteCookieData {
   employeeNumber: string;
+  groupName: string;
   selectedProductIds: string[];
   productNumbers: string[];
   timestamp: string;
