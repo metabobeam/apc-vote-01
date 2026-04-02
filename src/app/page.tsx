@@ -277,7 +277,7 @@ export default function VotePage() {
                   </label>
                   <div className="flex flex-col gap-3">
                     <div>
-                      <p className="text-slate-400 text-xs mb-1.5">所属組</p>
+                      <p className="text-slate-400 text-xs mb-1.5">あなたの所属している組</p>
                       {config.groups && config.groups.length > 0 ? (
                         <select
                           value={groupName}
