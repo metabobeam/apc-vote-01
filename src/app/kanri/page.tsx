@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ProductOption } from "@/lib/types";
+import { ProductOption, VoteStats } from "@/lib/types";
 import { v4 as uuidv4 } from "uuid";
 import { getResultsAuth, setResultsAuth, clearResultsAuth, saveAdminPass, getAdminPass } from "@/lib/cookies";
 
@@ -91,6 +91,9 @@ export default function AdminPage() {
   const [resetting, setResetting] = useState(false);
   const [resetConfirm, setResetConfirm] = useState(false);
 
+  const [showVoteResults, setShowVoteResults] = useState(false);
+  const [voteStats, setVoteStats] = useState<VoteStats | null>(null);
+
   const fetchConfig = async () => {
     const res = await fetch("/api/config");
     const data: Config = await res.json();
@@ -115,6 +118,13 @@ export default function AdminPage() {
     try {
       const res = await fetch("/api/judge");
       if (res.ok) setJudgeData(await res.json());
+    } catch { /* ignore */ }
+  };
+
+  const fetchVoteResults = async () => {
+    try {
+      const res = await fetch("/api/results");
+      if (res.ok) setVoteStats(await res.json());
     } catch { /* ignore */ }
   };
 
@@ -596,29 +606,31 @@ export default function AdminPage() {
                   </div>
                 ))}
               </div>
-              <p className="text-gray-400 text-xs mt-3">選択肢は2〜8個設定できます</p>
+              <div className="flex items-center justify-between mt-3">
+                <p className="text-gray-400 text-xs">選択肢は2〜8個設定できます</p>
+                <button
+                  id="main-save-btn"
+                  type="submit"
+                  disabled={saving}
+                  className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold px-6 py-2 rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-50 flex items-center gap-2 text-sm"
+                >
+                  {saving ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      保存中...
+                    </>
+                  ) : "設定を保存"}
+                </button>
+              </div>
+              {saveMsg && (
+                <p className={`text-right text-xs font-medium mt-1.5 ${saveMsg.startsWith("✓") ? "text-green-600" : "text-red-500"}`}>
+                  {saveMsg}
+                </p>
+              )}
             </div>
 
             {/* Actions */}
             <div className="flex flex-col gap-3">
-              {saveMsg && (
-                <p className={`text-center text-sm font-medium ${saveMsg.startsWith("✓") ? "text-green-600" : "text-red-500"}`}>
-                  {saveMsg}
-                </p>
-              )}
-              <button
-                id="main-save-btn"
-                type="submit"
-                disabled={saving}
-                className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {saving ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    保存中...
-                  </>
-                ) : "設定を保存"}
-              </button>
 
               <div className="border-t border-gray-200 pt-3">
                 {!resetConfirm ? (
@@ -655,13 +667,23 @@ export default function AdminPage() {
                 )}
               </div>
 
+              {/* 投票内容確認（上に移動） */}
+              <button
+                type="button"
+                onClick={() => router.push("/kanri/votes")}
+                className="w-full bg-rose-50 hover:bg-rose-100 border border-rose-200 hover:border-rose-300 text-rose-600 font-medium text-sm py-2.5 rounded-xl transition-all flex items-center justify-center gap-2"
+              >
+                <span>🗳️</span> 投票内容の確認・無効票削除
+              </button>
+
+              {/* 結果確認 + 結果発表（下に移動） */}
               <div className="flex gap-3">
                 <button
                   type="button"
-                  onClick={() => router.push("/results")}
-                  className="flex-1 text-gray-400 hover:text-gray-600 text-sm transition-colors py-2"
+                  onClick={() => { fetchVoteResults(); setShowVoteResults((v) => !v); }}
+                  className="flex-1 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 hover:border-emerald-300 text-emerald-700 font-medium text-sm py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5"
                 >
-                  結果ページ →
+                  📊 結果確認
                 </button>
                 <button
                   type="button"
@@ -669,15 +691,6 @@ export default function AdminPage() {
                   className="flex-1 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-sm py-2.5 rounded-xl transition-all shadow-md"
                 >
                   🎬 社員投票 結果発表へ
-                </button>
-              </div>
-              <div className="border-t border-dashed border-gray-200 pt-3 mt-1">
-                <button
-                  type="button"
-                  onClick={() => router.push("/kanri/votes")}
-                  className="w-full bg-rose-50 hover:bg-rose-100 border border-rose-200 hover:border-rose-300 text-rose-600 font-medium text-sm py-2.5 rounded-xl transition-all flex items-center justify-center gap-2"
-                >
-                  <span>🗳️</span> 投票内容の確認・無効票削除
                 </button>
               </div>
 
@@ -1113,27 +1126,71 @@ export default function AdminPage() {
             })()}
           </div>
 
-          {/* ページ最下部の保存ボタン */}
-          <div className="mt-8 pb-4">
-            {saveMsg && (
-              <p className={`text-center text-sm font-medium mb-3 ${saveMsg.startsWith("✓") ? "text-green-600" : "text-red-500"}`}>
-                {saveMsg}
-              </p>
-            )}
-            <button
-              type="button"
-              disabled={saving}
-              onClick={() => document.getElementById("main-save-btn")?.click()}
-              className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {saving ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  保存中...
-                </>
-              ) : "設定を保存"}
-            </button>
-          </div>
+          {/* インライン社員投票結果パネル */}
+          {showVoteResults && (
+            <div className="mt-8 bg-white border-2 border-emerald-100 rounded-2xl p-6 shadow-sm pb-8">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base font-bold text-gray-800">📊 社員投票 結果</h2>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={fetchVoteResults}
+                    className="text-xs text-gray-400 hover:text-gray-600 border border-gray-200 px-2.5 py-1 rounded-lg transition-colors"
+                  >
+                    更新
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowVoteResults(false)}
+                    className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+              {voteStats ? (() => {
+                const maxCount = Math.max(...voteStats.results.map((r) => r.count), 1);
+                const sorted = [...voteStats.results].sort((a, b) => b.count - a.count);
+                return (
+                  <>
+                    <p className="text-xs text-gray-500 mb-4">
+                      総投票数：<span className="font-black text-emerald-600 text-sm">{voteStats.totalVotes}</span> 票
+                    </p>
+                    <div className="flex flex-col gap-3">
+                      {sorted.map((r, i) => {
+                        const pct = maxCount > 0 ? (r.count / maxCount) * 100 : 0;
+                        const isFirst = i === 0 && r.count > 0;
+                        return (
+                          <div key={r.productId}>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-sm font-bold text-gray-700 flex items-center gap-1.5">
+                                {isFirst && <span className="text-base">🥇</span>}
+                                {r.productNumber.replace("\n", " ")}
+                              </span>
+                              <span className="text-sm font-black text-gray-800">
+                                {r.count} <span className="text-xs font-normal text-gray-400">票</span>
+                                <span className="text-xs text-gray-400 ml-1.5">({r.percentage}%)</span>
+                              </span>
+                            </div>
+                            <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all ${isFirst ? "bg-gradient-to-r from-amber-400 to-orange-400" : "bg-gradient-to-r from-blue-400 to-indigo-400"}`}
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                );
+              })() : (
+                <div className="flex justify-center py-6">
+                  <div className="w-6 h-6 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
+            </div>
+          )}
 
           </>
         )}
