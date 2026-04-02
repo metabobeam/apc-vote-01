@@ -66,6 +66,8 @@ interface Award {
 
 type Phase = "standby" | "revealing" | "finished";
 
+const SESSION_KEY = "review_announce_state";
+
 const AWARD_THEMES = [
   { bg: "linear-gradient(135deg,#1e3a5f,#1d4ed8,#2563eb)", accent: "#93c5fd", glow: "rgba(96,165,250,0.5)", badge: "#3b82f6", line: "#60a5fa" },
   { bg: "linear-gradient(135deg,#3b1a5f,#7c3aed,#9333ea)", accent: "#d8b4fe", glow: "rgba(167,139,250,0.5)", badge: "#8b5cf6", line: "#a78bfa" },
@@ -112,8 +114,32 @@ export default function ReviewAnnouncePage() {
         };
       });
       setAwards(computed);
+
+      // セッション復元
+      try {
+        const saved = sessionStorage.getItem(SESSION_KEY);
+        if (saved) {
+          const { phase: savedPhase, revealedCount: savedCount } = JSON.parse(saved) as { phase: Phase; revealedCount: number };
+          if (savedPhase === "revealing" || savedPhase === "finished") {
+            setPhase(savedPhase);
+            setRevealedCount(savedCount);
+            if (savedPhase === "finished") {
+              // 桜は再生成
+              setTimeout(() => startSakura(), 100);
+            }
+          }
+        }
+      } catch { /* ignore */ }
     } catch { /* ignore */ } finally { setLoading(false); }
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // phase / revealedCount が変わったらセッションに保存
+  useEffect(() => {
+    if (phase === "standby") return;
+    try {
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify({ phase, revealedCount }));
+    } catch { /* ignore */ }
+  }, [phase, revealedCount]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -164,6 +190,7 @@ export default function ReviewAnnouncePage() {
     setRevealedCount(0);
     setFlipIdx(null);
     setAnimating(false);
+    try { sessionStorage.removeItem(SESSION_KEY); } catch { /* ignore */ }
   };
 
   if (loading) return (
