@@ -457,23 +457,29 @@ export default function JudgeAnnouncePage() {
                             {/* 中央カラーエリア */}
                             <div style={{ position:"absolute", left:"11%", right:"11%", top:0, bottom:0, display:"flex", flexDirection:"column" }}>
                               <div style={{ height:"10px", background:"linear-gradient(180deg,#c8900a,#7a5200)", borderBottom:"1px solid #ffe066" }} />
-                              <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"12px 0", background:color.bg, position:"relative" }}>
+                              <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"12px 0", background:color.bg, position:"relative", overflow:"hidden" }}>
                                 <div style={{ position:"absolute", inset:0, pointerEvents:"none", background:"linear-gradient(170deg,rgba(255,255,255,0.18) 0%,transparent 50%)" }} />
-                                <div style={{ display:"flex", flexDirection:"row-reverse", alignItems:"center", justifyContent:"center", gap:"4px", position:"relative", zIndex:1 }}>
-                                  {(candidate?.productNumber ?? "").split("\n").map((line, li) => (
-                                    <p key={li} style={{
-                                      fontWeight:900, color:"#fff", lineHeight:1.4, margin:0,
-                                      writingMode:"vertical-rl", textOrientation:"mixed",
-                                      fontSize: li === 1
-                                        ? "clamp(15px,2.3vw,27px)"
-                                        : "clamp(22px,3.3vw,39px)",
-                                      letterSpacing:"0.08em",
-                                      textShadow:"0 2px 8px rgba(0,0,0,0.6),0 0 20px rgba(255,255,255,0.4)",
-                                      whiteSpace:"nowrap",
-                                    }}>
-                                      {line}
-                                    </p>
-                                  ))}
+                                <div style={{ display:"flex", flexDirection:"row-reverse", alignItems:"center", justifyContent:"center", gap:"4px", position:"relative", zIndex:1, overflow:"hidden", maxHeight:"100%" }}>
+                                  {(candidate?.productNumber ?? "").split("\n").map((line, li) => {
+                                    const isLong = li === 0 && line.length >= 15;
+                                    return (
+                                      <p key={li} style={{
+                                        fontWeight:900, color:"#fff", lineHeight:1.4, margin:0,
+                                        writingMode:"vertical-rl", textOrientation:"mixed",
+                                        fontSize: li === 1
+                                          ? "clamp(15px,2.3vw,27px)"
+                                          : isLong
+                                            ? "clamp(15px,2.3vw,27px)"
+                                            : "clamp(22px,3.3vw,39px)",
+                                        letterSpacing:"0.08em",
+                                        textShadow:"0 2px 8px rgba(0,0,0,0.6),0 0 20px rgba(255,255,255,0.4)",
+                                        whiteSpace:"nowrap",
+                                        overflow:"hidden",
+                                      }}>
+                                        {line}
+                                      </p>
+                                    );
+                                  })}
                                 </div>
                               </div>
                               <div style={{ height:"10px", background:"linear-gradient(0deg,#c8900a,#7a5200)", borderTop:"1px solid #ffe066" }} />
@@ -514,6 +520,21 @@ export default function JudgeAnnouncePage() {
 
           {/* 右下固定：操作ボタン */}
           <div className="fixed bottom-6 right-8 z-20 flex flex-col items-end gap-2">
+            <a
+              href="/judge/winner"
+              className="text-gray-800 hover:text-gray-600 transition-colors"
+              style={{ fontSize: "30px", letterSpacing: "0.05em" }}
+            >
+              優勝表示
+            </a>
+            {phase==="finished"&&(
+              <a href="/judge" className="text-gray-600 hover:text-gray-400 text-xs transition-colors">
+                ← 審査員投票ページへ
+              </a>
+            )}
+            <button onClick={handleReset} className="text-gray-700 hover:text-gray-500 text-xs transition-colors">
+              ↩ 最初からやり直す
+            </button>
             {phase==="revealing"&&revealedCount<orderedVotes.length&&(
               <button onClick={handleRevealNext} disabled={animating}
                 className={`font-normal rounded-lg transition-all ${animating?"opacity-50 cursor-not-allowed":"hover:opacity-80 active:scale-95"}`}
@@ -528,21 +549,6 @@ export default function JudgeAnnouncePage() {
                 {animating ? "発表中..." : `次の審査員を発表　${revealedCount+1} / ${orderedVotes.length}`}
               </button>
             )}
-            {phase==="finished"&&(
-              <a href="/judge" className="text-gray-600 hover:text-gray-400 text-xs transition-colors">
-                ← 審査員投票ページへ
-              </a>
-            )}
-            <button onClick={handleReset} className="text-gray-700 hover:text-gray-500 text-xs transition-colors">
-              ↩ 最初からやり直す
-            </button>
-            <a
-              href="/judge/winner"
-              className="text-gray-800 hover:text-gray-600 transition-colors"
-              style={{ fontSize: "30px", letterSpacing: "0.05em" }}
-            >
-              優勝表示
-            </a>
           </div>
         </div>
       )}
