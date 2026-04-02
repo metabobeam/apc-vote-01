@@ -492,6 +492,70 @@ export default function AdminPage() {
               </div>
             </div>
 
+            {/* ── 組管理 ── */}
+            <div className="bg-white border-2 border-orange-100 rounded-2xl p-6 shadow-sm">
+              <div className="flex items-center mb-4">
+                <h2 className="text-base font-bold text-gray-800">🏠 組管理</h2>
+              </div>
+              <div className="flex gap-2 mb-4">
+                <input
+                  type="text"
+                  value={newGroupName}
+                  onChange={(e) => setNewGroupName(e.target.value)}
+                  placeholder="組名を入力（例：鷺組）"
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-orange-400"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const name = newGroupName.trim();
+                      if (name && !groups.includes(name)) {
+                        const next = [...groups, name];
+                        setGroups(next);
+                        setNewGroupName("");
+                        saveGroups(next);
+                      }
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const name = newGroupName.trim();
+                    if (name && !groups.includes(name)) {
+                      const next = [...groups, name];
+                      setGroups(next);
+                      setNewGroupName("");
+                      saveGroups(next);
+                    }
+                  }}
+                  className="px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm rounded-lg transition-colors"
+                >
+                  追加
+                </button>
+              </div>
+              {groups.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {groups.map((name) => (
+                    <span key={name} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm border bg-orange-50 border-orange-200 text-orange-700">
+                      {name}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const next = groups.filter((g) => g !== name);
+                          setGroups(next);
+                          saveGroups(next);
+                        }}
+                        className="text-orange-400 hover:text-red-500 ml-0.5 transition-colors"
+                      >×</button>
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-400 text-sm">組が登録されていません</p>
+              )}
+              <p className="text-gray-400 text-xs mt-3">※ 組の追加・削除は即座に保存されます</p>
+            </div>
+
             {/* Options */}
             <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
               <div className="flex items-center justify-between mb-5">
@@ -619,72 +683,6 @@ export default function AdminPage() {
 
             </div>
           </form>
-
-          {/* ── 組管理 ── */}
-          <div className="bg-white border-2 border-orange-100 rounded-2xl p-6 shadow-sm mt-6">
-            <div className="flex items-center mb-4">
-              <h2 className="text-base font-bold text-gray-800">🏠 組管理</h2>
-            </div>
-
-            <div className="flex gap-2 mb-4">
-              <input
-                type="text"
-                value={newGroupName}
-                onChange={(e) => setNewGroupName(e.target.value)}
-                placeholder="組名を入力（例：鷺組）"
-                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-orange-400"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    const name = newGroupName.trim();
-                    if (name && !groups.includes(name)) {
-                      const next = [...groups, name];
-                      setGroups(next);
-                      setNewGroupName("");
-                      saveGroups(next);
-                    }
-                  }
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  const name = newGroupName.trim();
-                  if (name && !groups.includes(name)) {
-                    const next = [...groups, name];
-                    setGroups(next);
-                    setNewGroupName("");
-                    saveGroups(next);
-                  }
-                }}
-                className="px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm rounded-lg transition-colors"
-              >
-                追加
-              </button>
-            </div>
-
-            {groups.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {groups.map((name) => (
-                  <span key={name} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm border bg-orange-50 border-orange-200 text-orange-700">
-                    {name}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const next = groups.filter((g) => g !== name);
-                        setGroups(next);
-                        saveGroups(next);
-                      }}
-                      className="text-orange-400 hover:text-red-500 ml-0.5 transition-colors"
-                    >×</button>
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-400 text-sm">組が登録されていません</p>
-            )}
-            <p className="text-gray-400 text-xs mt-3">※ 組の追加・削除は即座に保存されます</p>
-          </div>
 
           {/* ────────────── セクション区切り ────────────── */}
           <div className="mt-10 mb-6 flex items-center gap-4">
