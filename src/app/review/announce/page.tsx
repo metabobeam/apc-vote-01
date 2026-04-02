@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { DEFAULT_CRITERIA_LABELS } from "@/lib/types";
 
 // 桜の花びら（5枚花弁、先端に切れ込み）
@@ -84,6 +84,15 @@ export default function ReviewAnnouncePage() {
   const [flipIdx, setFlipIdx] = useState<number | null>(null);
   const [flashIdx, setFlashIdx] = useState<number | null>(null);
   const [sakuraList, setSakuraList] = useState<{ id: number; x: number; delay: number; duration: number; size: number; rotate: number; color: string }[]>([]);
+  const flipAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // 音声プリロード（初回マウント時）
+  useEffect(() => {
+    const audio = new Audio("/review-flip-sound.mp3");
+    audio.preload = "auto";
+    flipAudioRef.current = audio;
+    return () => { flipAudioRef.current = null; };
+  }, []);
   const fetchData = useCallback(async () => {
     try {
       const res = await fetch("/api/review");
@@ -161,6 +170,11 @@ export default function ReviewAnnouncePage() {
 
   const handleRevealNext = () => {
     if (animating || revealedCount >= awards.length) return;
+    // パネルめくりと同時に音を再生（遅延なし）
+    if (flipAudioRef.current) {
+      flipAudioRef.current.currentTime = 0;
+      flipAudioRef.current.play().catch(() => {});
+    }
     const idx = revealedCount;
     setAnimating(true);
     setFlipIdx(idx);
