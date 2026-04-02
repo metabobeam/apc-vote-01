@@ -84,14 +84,20 @@ export default function ReviewAnnouncePage() {
   const [flipIdx, setFlipIdx] = useState<number | null>(null);
   const [flashIdx, setFlashIdx] = useState<number | null>(null);
   const [sakuraList, setSakuraList] = useState<{ id: number; x: number; delay: number; duration: number; size: number; rotate: number; color: string }[]>([]);
-  const flipAudioRef = useRef<HTMLAudioElement | null>(null);
+  const flipAudioRef  = useRef<HTMLAudioElement | null>(null);  // 3枚目用（C）
+  const flipAudioBRef = useRef<HTMLAudioElement | null>(null);  // 1・2枚目用（B）
 
   // 音声プリロード（初回マウント時）
   useEffect(() => {
-    const audio = new Audio("/review-flip-sound.mp3");
-    audio.preload = "auto";
-    flipAudioRef.current = audio;
-    return () => { flipAudioRef.current = null; };
+    const audioC = new Audio("/review-flip-sound.mp3");
+    audioC.preload = "auto";
+    flipAudioRef.current = audioC;
+
+    const audioB = new Audio("/review-flip-sound-b.mp3");
+    audioB.preload = "auto";
+    flipAudioBRef.current = audioB;
+
+    return () => { flipAudioRef.current = null; flipAudioBRef.current = null; };
   }, []);
   const fetchData = useCallback(async () => {
     try {
@@ -170,10 +176,11 @@ export default function ReviewAnnouncePage() {
 
   const handleRevealNext = () => {
     if (animating || revealedCount >= awards.length) return;
-    // パネルめくりと同時に音を再生（遅延なし）
-    if (flipAudioRef.current) {
-      flipAudioRef.current.currentTime = 0;
-      flipAudioRef.current.play().catch(() => {});
+    // パネルめくりと同時に音を再生（1・2枚目はB、3枚目はC）
+    const audio = revealedCount < 2 ? flipAudioBRef.current : flipAudioRef.current;
+    if (audio) {
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
     }
     const idx = revealedCount;
     setAnimating(true);
