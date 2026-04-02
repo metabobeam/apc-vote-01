@@ -24,6 +24,12 @@ export default function JudgePage() {
   const [successMsg, setSuccessMsg] = useState("");
   const [cancelingJudge, setCancelingJudge] = useState<string | null>(null);
 
+  // 全リセット用state
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetPassword, setResetPassword] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetError, setResetError] = useState("");
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
@@ -104,6 +110,32 @@ export default function JudgePage() {
       }
     } finally {
       setCancelingJudge(null);
+    }
+  };
+
+  const handleResetAll = async () => {
+    setResetLoading(true);
+    setResetError("");
+    try {
+      const res = await fetch("/api/judge", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clearAll: true, password: resetPassword }),
+      });
+      if (res.ok) {
+        setShowResetModal(false);
+        setResetPassword("");
+        setSelections({});
+        setSuccessMsg("");
+        fetchData();
+      } else {
+        const d = await res.json();
+        setResetError(d.error ?? "削除に失敗しました");
+      }
+    } catch {
+      setResetError("通信エラーが発生しました");
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -337,12 +369,23 @@ export default function JudgePage() {
 
         {/* フッターボタン */}
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <a
-            href="/kanri"
-            className="text-gray-400 hover:text-gray-600 text-sm transition-colors flex items-center gap-1"
-          >
-            ← 管理画面へ戻る
-          </a>
+          <div className="flex items-center gap-4">
+            <a
+              href="/kanri"
+              className="text-gray-400 hover:text-gray-600 text-sm transition-colors flex items-center gap-1"
+            >
+              ← 管理画面へ戻る
+            </a>
+            {votedCount > 0 && (
+              <button
+                type="button"
+                onClick={() => { setShowResetModal(true); setResetPassword(""); setResetError(""); }}
+                className="text-xs text-rose-400 hover:text-rose-600 border border-rose-200 hover:border-rose-400 px-3 py-1.5 rounded-lg transition-all"
+              >
+                🗑 全投票リセット
+              </button>
+            )}
+          </div>
           <a
             href="/judge/announce"
             className="px-8 py-3 rounded-xl font-bold text-white text-base shadow-md transition-all hover:shadow-lg hover:scale-[1.02] active:scale-100"
@@ -352,6 +395,49 @@ export default function JudgePage() {
           </a>
         </div>
       </div>
+
+      {/* 全リセット確認モーダル */}
+      {showResetModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm">
+            <h3 className="text-base font-bold text-gray-800 mb-1">全投票データをリセット</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              全審査員の投票データが削除されます。この操作は取り消せません。
+            </p>
+            <div className="mb-4">
+              <label className="block text-xs text-gray-500 mb-1.5">管理者パスワード</label>
+              <input
+                type="password"
+                value={resetPassword}
+                onChange={(e) => setResetPassword(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleResetAll()}
+                placeholder="パスワードを入力"
+                className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-400 focus:ring-1 focus:ring-rose-200"
+                autoFocus
+              />
+            </div>
+            {resetError && (
+              <p className="text-sm text-rose-500 mb-3">{resetError}</p>
+            )}
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setShowResetModal(false); setResetPassword(""); setResetError(""); }}
+                disabled={resetLoading}
+                className="flex-1 py-2.5 rounded-xl border border-gray-300 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-all disabled:opacity-50"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleResetAll}
+                disabled={resetLoading || !resetPassword}
+                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {resetLoading ? "削除中..." : "削除する"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
