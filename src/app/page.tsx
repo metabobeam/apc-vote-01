@@ -72,8 +72,16 @@ export default function VotePage() {
     setStep("select");
   };
 
+  const isSameGroupOption = (option: ProductOption) => {
+    if (!groupName.trim()) return false;
+    const target = option.productNumber + " " + option.description;
+    return target.includes(groupName.trim());
+  };
+
   const toggleSelection = (id: string) => {
     if (!config) return;
+    const option = config.options.find((o) => o.id === id);
+    if (option && isSameGroupOption(option)) return;
     const max = config.maxSelections;
     if (max === 1) {
       setSelectedIds(selectedIds.includes(id) ? [] : [id]);
@@ -340,8 +348,7 @@ export default function VotePage() {
                   <div className="grid gap-2.5">
                     {config.options.map((option, index) => {
                       const isSelected = selectedIds.includes(option.id);
-                      const isSameGroup = groupName.trim() !== "" &&
-                        (option.productNumber.includes(groupName) || option.description.includes(groupName));
+                      const isSameGroup = isSameGroupOption(option);
                       const isDisabled = isSameGroup || (!isSelected && selectedIds.length >= maxSel);
                       return (
                         <button
