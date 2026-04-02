@@ -416,7 +416,7 @@ export default function AnnouncePage() {
                         key={li}
                         className="font-mono font-black tracking-widest block leading-tight"
                         style={{
-                          fontSize: li === 0 ? "clamp(32px,3.2vw,50px)" : "clamp(24px,2.3vw,36px)",
+                          fontSize: li === 0 ? "clamp(21px,2.1vw,33px)" : "clamp(16px,1.5vw,24px)",
                           color: revealedRank1 && isRank1 ? "#7f1d1d"
                                : revealedRank2 && isRank2 ? "#7c2d12"
                                : "#4a1942",
@@ -435,7 +435,7 @@ export default function AnnouncePage() {
                     <div
                       className="rounded-r-2xl overflow-visible relative w-full"
                       style={{
-                        height: "clamp(56px,9vh,112px)",
+                        height: "clamp(28px,4.5vh,56px)",
                         background: "rgba(255,255,255,0.4)",
                         border: revealedRank1 && isRank1 ? "1px solid rgba(239,68,68,0.4)"
                                : revealedRank2 && isRank2 ? "1px solid rgba(249,115,22,0.3)"
