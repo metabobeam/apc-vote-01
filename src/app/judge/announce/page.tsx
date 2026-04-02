@@ -441,7 +441,7 @@ export default function JudgeAnnouncePage() {
                                     <p key={li} style={{
                                       fontWeight:900, color:"#fff", lineHeight:1.4, margin:0,
                                       writingMode:"vertical-rl", textOrientation:"mixed",
-                                      fontSize: li === 0
+                                      fontSize: li === 1
                                         ? "clamp(15px,2.3vw,27px)"
                                         : "clamp(22px,3.3vw,39px)",
                                       letterSpacing:"0.08em",
