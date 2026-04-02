@@ -620,15 +620,8 @@ export default function AdminPage() {
             </div>
           </form>
 
-          {/* ────────────── セクション区切り ────────────── */}
-          <div className="mt-10 mb-6 flex items-center gap-4">
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
-            <span className="text-xs font-bold text-gray-400 tracking-widest uppercase px-2 whitespace-nowrap">審査員・優勝決定</span>
-            <div className="flex-1 h-px bg-gradient-to-l from-transparent via-gray-300 to-transparent" />
-          </div>
-
           {/* ── 組管理 ── */}
-          <div className="bg-white border-2 border-orange-100 rounded-2xl p-6 shadow-sm">
+          <div className="bg-white border-2 border-orange-100 rounded-2xl p-6 shadow-sm mt-6">
             <div className="flex items-center mb-4">
               <h2 className="text-base font-bold text-gray-800">🏠 組管理</h2>
             </div>
@@ -691,6 +684,13 @@ export default function AdminPage() {
               <p className="text-gray-400 text-sm">組が登録されていません</p>
             )}
             <p className="text-gray-400 text-xs mt-3">※ 組の追加・削除は即座に保存されます</p>
+          </div>
+
+          {/* ────────────── セクション区切り ────────────── */}
+          <div className="mt-10 mb-6 flex items-center gap-4">
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
+            <span className="text-xs font-bold text-gray-400 tracking-widest uppercase px-2 whitespace-nowrap">審査員・優勝決定</span>
+            <div className="flex-1 h-px bg-gradient-to-l from-transparent via-gray-300 to-transparent" />
           </div>
 
           {/* ── 審査員管理 ── */}
