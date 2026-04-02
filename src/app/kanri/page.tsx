@@ -676,6 +676,70 @@ export default function AdminPage() {
                 <span>🗳️</span> 投票内容の確認・無効票削除
               </button>
 
+              {/* 社員投票 結果パネル */}
+              <div className="bg-white border-2 border-emerald-100 rounded-2xl p-5 shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-sm font-bold text-gray-800">📊 社員投票 結果</h2>
+                  <button
+                    type="button"
+                    onClick={fetchVoteResults}
+                    className="text-xs text-gray-400 hover:text-gray-600 border border-gray-200 px-2.5 py-1 rounded-lg transition-colors"
+                  >
+                    更新
+                  </button>
+                </div>
+                {voteStats ? (() => {
+                  const maxCount = Math.max(...voteStats.results.map((r) => r.count), 1);
+                  const sorted = [...voteStats.results].sort((a, b) => b.count - a.count);
+                  return (
+                    <>
+                      <p className="text-xs text-gray-500 mb-3">
+                        総投票数：<span className="font-black text-emerald-600 text-sm">{voteStats.totalVotes}</span> 票
+                      </p>
+                      <div className="flex flex-col gap-2.5">
+                        {sorted.map((r, i) => {
+                          const pct = maxCount > 0 ? (r.count / maxCount) * 100 : 0;
+                          const isFirst = i === 0 && r.count > 0;
+                          return (
+                            <div key={r.productId}>
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-sm font-bold text-gray-700 flex items-center gap-1.5">
+                                  {isFirst && <span className="text-base">🥇</span>}
+                                  {r.productNumber.replace("\n", " ")}
+                                </span>
+                                <span className="text-sm font-black text-gray-800">
+                                  {r.count} <span className="text-xs font-normal text-gray-400">票</span>
+                                  <span className="text-xs text-gray-400 ml-1.5">({r.percentage}%)</span>
+                                </span>
+                              </div>
+                              <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all ${isFirst ? "bg-gradient-to-r from-amber-400 to-orange-400" : "bg-gradient-to-r from-blue-400 to-indigo-400"}`}
+                                  style={{ width: `${pct}%` }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  );
+                })() : (
+                  <div className="flex justify-center py-4">
+                    <div className="w-5 h-5 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                )}
+                <div className="mt-4 pt-3 border-t border-gray-100">
+                  <button
+                    type="button"
+                    onClick={() => router.push("/announce")}
+                    className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-sm py-3 rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
+                  >
+                    🎬 社員投票 結果発表へ
+                  </button>
+                </div>
+              </div>
+
             </div>
           </form>
 
@@ -1108,69 +1172,6 @@ export default function AdminPage() {
             })()}
           </div>
 
-          {/* 社員投票 結果パネル（常時表示） */}
-          <div className="mt-8 bg-white border-2 border-emerald-100 rounded-2xl p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-gray-800">📊 社員投票 結果</h2>
-              <button
-                type="button"
-                onClick={fetchVoteResults}
-                className="text-xs text-gray-400 hover:text-gray-600 border border-gray-200 px-2.5 py-1 rounded-lg transition-colors"
-              >
-                更新
-              </button>
-            </div>
-            {voteStats ? (() => {
-              const maxCount = Math.max(...voteStats.results.map((r) => r.count), 1);
-              const sorted = [...voteStats.results].sort((a, b) => b.count - a.count);
-              return (
-                <>
-                  <p className="text-xs text-gray-500 mb-4">
-                    総投票数：<span className="font-black text-emerald-600 text-sm">{voteStats.totalVotes}</span> 票
-                  </p>
-                  <div className="flex flex-col gap-3">
-                    {sorted.map((r, i) => {
-                      const pct = maxCount > 0 ? (r.count / maxCount) * 100 : 0;
-                      const isFirst = i === 0 && r.count > 0;
-                      return (
-                        <div key={r.productId}>
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-sm font-bold text-gray-700 flex items-center gap-1.5">
-                              {isFirst && <span className="text-base">🥇</span>}
-                              {r.productNumber.replace("\n", " ")}
-                            </span>
-                            <span className="text-sm font-black text-gray-800">
-                              {r.count} <span className="text-xs font-normal text-gray-400">票</span>
-                              <span className="text-xs text-gray-400 ml-1.5">({r.percentage}%)</span>
-                            </span>
-                          </div>
-                          <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                            <div
-                              className={`h-full rounded-full transition-all ${isFirst ? "bg-gradient-to-r from-amber-400 to-orange-400" : "bg-gradient-to-r from-blue-400 to-indigo-400"}`}
-                              style={{ width: `${pct}%` }}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </>
-              );
-            })() : (
-              <div className="flex justify-center py-6">
-                <div className="w-6 h-6 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
-              </div>
-            )}
-            <div className="mt-5 pt-4 border-t border-gray-100">
-              <button
-                type="button"
-                onClick={() => router.push("/announce")}
-                className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-sm py-3 rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
-              >
-                🎬 社員投票 結果発表へ
-              </button>
-            </div>
-          </div>
 
           </>
         )}
