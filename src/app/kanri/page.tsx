@@ -574,7 +574,7 @@ export default function AdminPage() {
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-gray-700 font-semibold text-sm tracking-wide flex items-center gap-2">
                   <span className="w-2 h-2 bg-indigo-500 rounded-full" />
-                  投票選択肢 ({options.length}/8)
+                  発表お題 ({options.length}/8)
                 </h2>
                 <button
                   type="button"
