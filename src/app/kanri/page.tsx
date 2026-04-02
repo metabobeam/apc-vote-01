@@ -315,7 +315,7 @@ export default function AdminPage() {
             <h1 className="text-2xl font-bold text-gray-800">管理者ダッシュボード</h1>
           </div>
           <div className="flex flex-col items-end gap-1">
-            <span className="text-xs text-gray-400 font-mono tracking-widest">Ver 0.9.1</span>
+            <span className="text-xs text-gray-400 font-mono tracking-widest">Ver 0.9.2</span>
             {step === "dashboard" && (
               <div className="flex items-center gap-3">
                 <button
