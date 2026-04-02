@@ -434,6 +434,18 @@ export default function AdminPage() {
                     >
                       +1分
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const now = new Date();
+                        const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+                          .toISOString().slice(0, 16);
+                        setDeadline(local);
+                      }}
+                      className="px-3 py-2.5 bg-gray-500 hover:bg-gray-400 text-white text-sm rounded-xl transition-colors whitespace-nowrap"
+                    >
+                      現在時刻
+                    </button>
                   </div>
                 </div>
                 <div>
