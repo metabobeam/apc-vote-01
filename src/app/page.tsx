@@ -340,7 +340,9 @@ export default function VotePage() {
                   <div className="grid gap-2.5">
                     {config.options.map((option, index) => {
                       const isSelected = selectedIds.includes(option.id);
-                      const isDisabled = !isSelected && selectedIds.length >= maxSel;
+                      const isSameGroup = groupName.trim() !== "" &&
+                        (option.productNumber.includes(groupName) || option.description.includes(groupName));
+                      const isDisabled = isSameGroup || (!isSelected && selectedIds.length >= maxSel);
                       return (
                         <button
                           key={option.id}
@@ -352,6 +354,8 @@ export default function VotePage() {
                             transition-all duration-200 w-full
                             ${isSelected
                               ? "border-indigo-500 bg-indigo-500/10 shadow-[0_0_20px_rgba(99,102,241,0.2)]"
+                              : isSameGroup
+                              ? "border-red-900/40 bg-red-950/20 opacity-50 cursor-not-allowed"
                               : isDisabled
                               ? "border-slate-800 bg-slate-800/30 opacity-40 cursor-not-allowed"
                               : "border-slate-700 bg-slate-800/50 hover:border-slate-500 hover:bg-slate-800/80 cursor-pointer"
@@ -375,6 +379,11 @@ export default function VotePage() {
                               <p className="text-slate-400 text-xs mt-0.5 truncate">{option.description}</p>
                             )}
                           </div>
+                          {isSameGroup && (
+                            <span className="flex-shrink-0 text-xs text-red-400 border border-red-800/50 rounded px-1.5 py-0.5 bg-red-950/30">
+                              同組
+                            </span>
+                          )}
                           {isSelected && maxSel > 1 && (
                             <div className="flex-shrink-0 w-5 h-5 bg-indigo-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
                               {selectedIds.indexOf(option.id) + 1}
