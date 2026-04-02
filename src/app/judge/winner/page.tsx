@@ -12,38 +12,36 @@ interface JudgeData {
   results: { productId: string; productNumber: string; judgeVoteCount: number }[];
 }
 
-// 桜の花びら（5枚花弁）
-function SakuraFlower({ size, color, rotate }: { size: number; color: string; rotate: number }) {
-  const petals = Array.from({ length: 5 }, (_, i) => {
-    const angle = (i * 72 * Math.PI) / 180;
-    const cx = 12 + Math.cos(angle - Math.PI / 2) * 5;
-    const cy = 12 + Math.sin(angle - Math.PI / 2) * 5;
-    return (
-      <ellipse key={i} cx={cx} cy={cy} rx={3.2} ry={5.5}
-        transform={`rotate(${i * 72 - 90 + 90}, ${cx}, ${cy})`}
-        fill={color} opacity="0.88" />
-    );
-  });
+// 桜の花びら1枚（涙型）
+function SinglePetal({ size, color }: { size: number; color: string }) {
   return (
-    <svg viewBox="0 0 24 24" width={size} height={size}
-      style={{ transform: `rotate(${rotate}deg)`, display: "block" }}>
-      {petals}
-      <circle cx="12" cy="12" r="2.2" fill="#fff0f5" opacity="0.9" />
-      <circle cx="12" cy="12" r="1" fill="#ffb7c5" opacity="1" />
+    <svg viewBox="0 0 24 36" width={size} height={Math.round(size * 1.5)}
+      style={{ display: "block" }}>
+      {/* 花びら本体：上が尖り、下が丸い涙型 */}
+      <path
+        d="M12,2 C16,6 20,14 20,22 C20,29 16,34 12,34 C8,34 4,29 4,22 C4,14 8,6 12,2 Z"
+        fill={color}
+        opacity="0.85"
+      />
+      {/* 中央の筋（葉脈風） */}
+      <line x1="12" y1="4" x2="12" y2="30"
+        stroke="rgba(255,255,255,0.35)" strokeWidth="1" strokeLinecap="round" />
     </svg>
   );
 }
 
-function SakuraPetal({ x, delay, duration, size, rotate, color }: {
-  x: number; delay: number; duration: number; size: number; rotate: number; color: string;
+function SakuraPetal({ x, delay, duration, size, spinDuration, color }: {
+  x: number; delay: number; duration: number; size: number; spinDuration: number; color: string;
 }) {
   return (
     <div style={{
-      position: "fixed", top: "-50px", left: `${x}%`, zIndex: 5, pointerEvents: "none",
-      width: `${size}px`, height: `${size}px`,
+      position: "fixed", top: "-60px", left: `${x}%`, zIndex: 5, pointerEvents: "none",
       animation: `sakuraFall ${duration}s ${delay}s ease-in-out infinite`,
     }}>
-      <SakuraFlower size={size} color={color} rotate={rotate} />
+      {/* 花びら自体はゆっくり回転 */}
+      <div style={{ animation: `sakuraSpin ${spinDuration}s linear infinite` }}>
+        <SinglePetal size={size} color={color} />
+      </div>
     </div>
   );
 }
@@ -92,10 +90,10 @@ const SAKURA_COLORS = ["#ffb7c5","#ffc8d5","#ff8fab","#ffccd5","#ffdde1","#ff99a
 const PETALS = Array.from({ length: 35 }, (_, i) => ({
   id: i,
   x: (i * 31 + 7) % 100,
-  delay: (i * 0.55) % 12,
-  duration: 8 + (i % 6) * 1.2,
-  size: 18 + (i % 5) * 5,
-  rotate: (i * 53) % 360,
+  delay: (i * 0.55) % 14,
+  duration: 9 + (i % 7) * 1.3,
+  size: 12 + (i % 4) * 4,
+  spinDuration: 2.5 + (i % 5) * 0.8,
   color: SAKURA_COLORS[i % SAKURA_COLORS.length],
 }));
 
@@ -171,7 +169,7 @@ export default function JudgeWinnerPage() {
       {/* 継続的な桜吹雪（少なめ） */}
       {PETALS.map((p) => (
         <SakuraPetal key={p.id} x={p.x} delay={p.delay} duration={p.duration}
-          size={p.size} rotate={p.rotate} color={p.color} />
+          size={p.size} spinDuration={p.spinDuration} color={p.color} />
       ))}
 
       {/* イベントタイトル */}
@@ -301,13 +299,21 @@ export default function JudgeWinnerPage() {
           to   { opacity: 1; text-shadow: 0 0 20px rgba(200,144,10,1), 0 0 40px rgba(255,200,0,0.6); }
         }
         @keyframes sakuraFall {
-          0%   { transform: translateY(-50px) rotate(0deg) translateX(0px);   opacity: 0; }
-          5%   { opacity: 0.85; }
-          25%  { transform: translateY(25vh)  rotate(90deg)  translateX(18px);  opacity: 0.8; }
-          50%  { transform: translateY(52vh)  rotate(185deg) translateX(-14px); opacity: 0.7; }
-          75%  { transform: translateY(77vh)  rotate(275deg) translateX(20px);  opacity: 0.5; }
-          95%  { opacity: 0.2; }
-          100% { transform: translateY(108vh) rotate(360deg) translateX(0px);   opacity: 0; }
+          0%   { transform: translateY(-60px) translateX(0px);   opacity: 0; }
+          5%   { opacity: 0.9; }
+          20%  { transform: translateY(20vh)  translateX(22px);  opacity: 0.85; }
+          40%  { transform: translateY(42vh)  translateX(-18px); opacity: 0.8; }
+          60%  { transform: translateY(62vh)  translateX(26px);  opacity: 0.65; }
+          80%  { transform: translateY(82vh)  translateX(-12px); opacity: 0.4; }
+          95%  { opacity: 0.1; }
+          100% { transform: translateY(110vh) translateX(8px);   opacity: 0; }
+        }
+        @keyframes sakuraSpin {
+          from { transform: rotate(0deg) scaleX(1); }
+          25%  { transform: rotate(90deg) scaleX(0.15); }
+          50%  { transform: rotate(180deg) scaleX(1); }
+          75%  { transform: rotate(270deg) scaleX(0.15); }
+          to   { transform: rotate(360deg) scaleX(1); }
         }
       `}</style>
     </main>
