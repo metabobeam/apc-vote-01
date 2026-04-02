@@ -505,59 +505,15 @@ export default function AnnouncePage() {
             })}
           </div>
 
-          {/* 表示ボタン行 */}
-          <div
-            className="flex-shrink-0 flex items-center gap-4"
-            style={{
-              visibility: phase === "standby" ? "visible" : "hidden",
-              marginTop: "clamp(8px,1.2vh,20px)",
-              paddingTop: "clamp(8px,1vh,14px)",
-              borderTop: "1px solid rgba(219,112,147,0.2)",
-            }}
-          >
-            <div className="flex-shrink-0" style={{ width: "clamp(90px,11vw,180px)" }} />
-            <div className="flex-1 flex items-center gap-5">
-              <button
-                onClick={startReveal}
-                className="flex items-center gap-3 font-black rounded-2xl transition-all active:scale-95"
-                style={{
-                  fontSize: "clamp(14px,1.4vw,22px)",
-                  padding: "clamp(10px,1.2vh,16px) clamp(24px,2.5vw,40px)",
-                  background: "linear-gradient(135deg, #ec4899, #db2777)",
-                  color: "#fff",
-                  boxShadow: "0 0 24px rgba(236,72,153,0.6), 0 0 48px rgba(219,39,119,0.3), inset 0 1px 0 rgba(255,255,255,0.3)",
-                }}
-              >
-                <PlayIcon />
-                結果発表
-              </button>
-            </div>
-            <div className="flex-shrink-0" style={{ width: "clamp(140px,16vw,240px)" }} />
-          </div>
         </div>
       </div>
 
       {/* ── フッターエリア (約10vh) ── */}
-      <div className="flex-shrink-0 flex items-center justify-center gap-6" style={{ height: "10vh" }}>
-        {/* 完了後ボタン */}
-        <div style={{ visibility: phase === "complete" ? "visible" : "hidden" }} className="flex gap-4">
-          <button
-            onClick={reset}
-            className="font-medium rounded-xl border transition-all"
-            style={{ background: "rgba(255,255,255,0.6)", backdropFilter: "blur(8px)", border: "1px solid rgba(219,112,147,0.4)", color: "#9d174d", fontSize: "clamp(12px,1vw,16px)", padding: "clamp(8px,1vh,12px) clamp(20px,2vw,32px)" }}
-          >
-            ↩ もう一度
-          </button>
-          <button
-            onClick={() => router.push("/kanri")}
-            className="font-medium rounded-xl border transition-all"
-            style={{ background: "rgba(255,255,255,0.6)", backdropFilter: "blur(8px)", border: "1px solid rgba(219,112,147,0.4)", color: "#9d174d", fontSize: "clamp(12px,1vw,16px)", padding: "clamp(8px,1vh,12px) clamp(20px,2vw,32px)" }}
-          >
-            管理者へ
-          </button>
-        </div>
-
-        {/* フッターリンク */}
+      <div
+        className="flex-shrink-0 flex items-center justify-between"
+        style={{ height: "10vh", padding: "0 clamp(48px,6vw,96px)" }}
+      >
+        {/* 左: フッターリンク */}
         <div className="flex gap-5">
           <button onClick={() => router.push("/")} className="transition-colors" style={{ fontSize: "clamp(10px,0.75vw,12px)", color: "rgba(157,23,77,0.4)" }}>
             ← 投票ページ
@@ -566,6 +522,46 @@ export default function AnnouncePage() {
           <button onClick={() => router.push("/kanri")} className="transition-colors" style={{ fontSize: "clamp(10px,0.75vw,12px)", color: "rgba(157,23,77,0.4)" }}>
             管理者
           </button>
+        </div>
+
+        {/* 右: フェーズ別アクションボタン */}
+        <div className="flex items-center gap-4">
+          {/* standby: 結果発表ボタン */}
+          {phase === "standby" && (
+            <button
+              onClick={startReveal}
+              className="flex items-center gap-3 font-black rounded-2xl transition-all active:scale-95"
+              style={{
+                fontSize: "clamp(14px,1.4vw,22px)",
+                padding: "clamp(10px,1.2vh,16px) clamp(24px,2.5vw,40px)",
+                background: "linear-gradient(135deg, #ec4899, #db2777)",
+                color: "#fff",
+                boxShadow: "0 0 24px rgba(236,72,153,0.6), 0 0 48px rgba(219,39,119,0.3), inset 0 1px 0 rgba(255,255,255,0.3)",
+              }}
+            >
+              <PlayIcon />
+              結果発表
+            </button>
+          )}
+          {/* complete: リセット・管理者ボタン */}
+          {phase === "complete" && (
+            <>
+              <button
+                onClick={reset}
+                className="font-medium rounded-xl transition-all"
+                style={{ background: "rgba(255,255,255,0.6)", backdropFilter: "blur(8px)", border: "1px solid rgba(219,112,147,0.4)", color: "#9d174d", fontSize: "clamp(12px,1vw,16px)", padding: "clamp(8px,1vh,12px) clamp(20px,2vw,32px)" }}
+              >
+                ↩ もう一度
+              </button>
+              <button
+                onClick={() => router.push("/kanri")}
+                className="font-medium rounded-xl transition-all"
+                style={{ background: "rgba(255,255,255,0.6)", backdropFilter: "blur(8px)", border: "1px solid rgba(219,112,147,0.4)", color: "#9d174d", fontSize: "clamp(12px,1vw,16px)", padding: "clamp(8px,1vh,12px) clamp(20px,2vw,32px)" }}
+              >
+                管理者へ
+              </button>
+            </>
+          )}
         </div>
       </div>
     </main>
