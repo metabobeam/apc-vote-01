@@ -492,6 +492,13 @@ export default function JudgeAnnouncePage() {
             <button onClick={handleReset} className="text-gray-700 hover:text-gray-500 text-xs transition-colors">
               ↩ 最初からやり直す
             </button>
+            <a
+              href="/judge/winner"
+              className="text-gray-800 hover:text-gray-600 text-xs transition-colors"
+              style={{ fontSize: "10px", letterSpacing: "0.05em" }}
+            >
+              優勝表示
+            </a>
           </div>
         </div>
       )}
