@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 
 interface Candidate {
   productId: string;
@@ -103,6 +103,30 @@ export default function JudgeWinnerPage() {
   const [showTitle, setShowTitle] = useState(false);
   const [showWreath, setShowWreath] = useState(false);
   const [showWinner, setShowWinner] = useState(false);
+  const [playing, setPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // 音声プリロード
+  useEffect(() => {
+    const audio = new Audio("/award-ceremony.mp3");
+    audio.preload = "auto";
+    audio.loop = true;
+    audioRef.current = audio;
+    return () => { audio.pause(); audioRef.current = null; };
+  }, []);
+
+  const togglePlay = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (playing) {
+      audio.pause();
+      setPlaying(false);
+    } else {
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+      setPlaying(true);
+    }
+  }, [playing]);
 
   useEffect(() => {
     fetch("/api/judge")
@@ -271,23 +295,49 @@ export default function JudgeWinnerPage() {
         )}
       </div>
 
-      {/* 戻るリンク */}
-      <a
-        href="/judge/announce"
-        style={{
-          position: "fixed", bottom: "18px", right: "22px",
-          color: "rgba(255,255,255,0.18)",
-          fontSize: "11px",
-          textDecoration: "none",
-          transition: "color 0.2s",
-          zIndex: 20,
-          letterSpacing: "0.05em",
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.45)")}
-        onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.18)")}
-      >
-        ← 審査発表へ
-      </a>
+      {/* 右下：音楽再生ボタン ＋ 戻るリンク */}
+      <div style={{
+        position: "fixed", bottom: "16px", right: "20px",
+        display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "8px",
+        zIndex: 20,
+      }}>
+        {/* 再生／停止ボタン */}
+        <button
+          onClick={togglePlay}
+          style={{
+            background: "rgba(255,255,255,0.06)",
+            border: "1px solid rgba(255,255,255,0.12)",
+            borderRadius: "20px",
+            color: playing ? "rgba(255,210,80,0.6)" : "rgba(255,255,255,0.22)",
+            fontSize: "11px",
+            padding: "4px 12px",
+            cursor: "pointer",
+            letterSpacing: "0.06em",
+            transition: "color 0.2s, background 0.2s",
+            display: "flex", alignItems: "center", gap: "5px",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = playing ? "rgba(255,210,80,0.9)" : "rgba(255,255,255,0.5)")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = playing ? "rgba(255,210,80,0.6)" : "rgba(255,255,255,0.22)")}
+        >
+          {playing ? "■" : "▶"} {playing ? "停止" : "BGM再生"}
+        </button>
+
+        {/* 戻るリンク */}
+        <a
+          href="/judge/announce"
+          style={{
+            color: "rgba(255,255,255,0.18)",
+            fontSize: "11px",
+            textDecoration: "none",
+            transition: "color 0.2s",
+            letterSpacing: "0.05em",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.45)")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.18)")}
+        >
+          ← 審査発表へ
+        </a>
+      </div>
 
       <style>{`
         @keyframes goldPulse {
