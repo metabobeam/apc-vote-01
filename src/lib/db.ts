@@ -98,6 +98,7 @@ export function dbGetConfig(): VoteConfig {
   const config = JSON.parse(row.value) as VoteConfig;
   if (config.maxSelections === undefined) config.maxSelections = 1;
   if (config.judges === undefined) config.judges = [];
+  if (config.groups === undefined) config.groups = [];
   return config;
 }
 

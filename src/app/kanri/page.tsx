@@ -13,6 +13,7 @@ interface Config {
   isActive: boolean;
   maxSelections: number;
   judges: string[];
+  groups: string[];
 }
 
 interface JudgeData {
@@ -70,6 +71,9 @@ export default function AdminPage() {
   const [maxSelections, setMaxSelections] = useState(1);
   const [options, setOptions] = useState<ProductOption[]>([]);
 
+  const [groups, setGroups] = useState<string[]>([]);
+  const [newGroupName, setNewGroupName] = useState("");
+
   const [judges, setJudges] = useState<string[]>([]);
   const [newJudgeName, setNewJudgeName] = useState("");
   const [judgeData, setJudgeData] = useState<JudgeData | null>(null);
@@ -101,6 +105,7 @@ export default function AdminPage() {
       .slice(0, 16);
     setDeadline(local);
     setOptions(data.options.map((o) => ({ ...o })));
+    setGroups(data.groups ?? []);
     setJudges(data.judges ?? []);
     fetchJudgeData();
     fetchReviewData();
@@ -223,6 +228,25 @@ export default function AdminPage() {
       }
       return updated;
     }));
+  };
+
+  // 組リストを即時保存
+  const saveGroups = async (newGroups: string[]) => {
+    try {
+      const res = await fetch("/api/config", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password, groups: newGroups }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setSaveMsg(`✗ ${data.error ?? "保存に失敗しました"}`);
+        setTimeout(() => setSaveMsg(""), 3000);
+      }
+    } catch {
+      setSaveMsg("✗ 保存に失敗しました");
+      setTimeout(() => setSaveMsg(""), 3000);
+    }
   };
 
   // 審査員リストを即時保存
@@ -574,6 +598,72 @@ export default function AdminPage() {
             <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
             <span className="text-xs font-bold text-gray-400 tracking-widest uppercase px-2 whitespace-nowrap">審査員・優勝決定</span>
             <div className="flex-1 h-px bg-gradient-to-l from-transparent via-gray-300 to-transparent" />
+          </div>
+
+          {/* ── 組管理 ── */}
+          <div className="bg-white border-2 border-orange-100 rounded-2xl p-6 shadow-sm">
+            <div className="flex items-center mb-4">
+              <h2 className="text-base font-bold text-gray-800">🏠 組管理</h2>
+            </div>
+
+            <div className="flex gap-2 mb-4">
+              <input
+                type="text"
+                value={newGroupName}
+                onChange={(e) => setNewGroupName(e.target.value)}
+                placeholder="組名を入力（例：鷺組）"
+                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-orange-400"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const name = newGroupName.trim();
+                    if (name && !groups.includes(name)) {
+                      const next = [...groups, name];
+                      setGroups(next);
+                      setNewGroupName("");
+                      saveGroups(next);
+                    }
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const name = newGroupName.trim();
+                  if (name && !groups.includes(name)) {
+                    const next = [...groups, name];
+                    setGroups(next);
+                    setNewGroupName("");
+                    saveGroups(next);
+                  }
+                }}
+                className="px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm rounded-lg transition-colors"
+              >
+                追加
+              </button>
+            </div>
+
+            {groups.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {groups.map((name) => (
+                  <span key={name} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm border bg-orange-50 border-orange-200 text-orange-700">
+                    {name}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = groups.filter((g) => g !== name);
+                        setGroups(next);
+                        saveGroups(next);
+                      }}
+                      className="text-orange-400 hover:text-red-500 ml-0.5 transition-colors"
+                    >×</button>
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-400 text-sm">組が登録されていません</p>
+            )}
+            <p className="text-gray-400 text-xs mt-3">※ 組の追加・削除は即座に保存されます</p>
           </div>
 
           {/* ── 審査員管理 ── */}

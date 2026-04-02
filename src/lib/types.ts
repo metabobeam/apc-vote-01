@@ -12,6 +12,7 @@ export interface VoteConfig {
   adminPassword: string;
   maxSelections: number; // 1, 2, or 3
   judges: string[]; // 審査員名リスト
+  groups: string[]; // 組リスト
 }
 
 export interface JudgeVoteRecord {
@@ -107,4 +108,5 @@ export const DEFAULT_CONFIG: VoteConfig = {
   adminPassword: "admin1234",
   maxSelections: 1,
   judges: [],
+  groups: [],
 };
