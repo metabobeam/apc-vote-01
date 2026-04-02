@@ -137,14 +137,21 @@ export default function JudgeAnnouncePage() {
   const [phase, setPhase]         = useState<Phase>("standby");
   const [revealedCount, setRevealedCount] = useState(0);
   const [animating, setAnimating] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioRef        = useRef<HTMLAudioElement | null>(null);
+  const fanfareRef      = useRef<HTMLAudioElement | null>(null);
+  const fanfarePlayedRef = useRef(false);
 
   // 音声プリロード（初回マウント時）
   useEffect(() => {
-    const audio = new Audio("/panel-flip-sound.mp3");
-    audio.preload = "auto";
-    audioRef.current = audio;
-    return () => { audioRef.current = null; };
+    const flip = new Audio("/panel-flip-sound.mp3");
+    flip.preload = "auto";
+    audioRef.current = flip;
+
+    const fanfare = new Audio("/winner-fanfare.mp3");
+    fanfare.preload = "auto";
+    fanfareRef.current = fanfare;
+
+    return () => { audioRef.current = null; fanfareRef.current = null; };
   }, []);
 
   const fetchData = useCallback(async () => {
@@ -187,6 +194,22 @@ export default function JudgeAnnouncePage() {
       if (revealedCount + 1 >= orderedVotes.length) setTimeout(() => setPhase("finished"), 300);
     }, 300);
   };
+
+  // phase が "finished" になったらファンファーレ再生
+  useEffect(() => {
+    if (phase === "finished" && winnerIds.length > 0 && !fanfarePlayedRef.current) {
+      fanfarePlayedRef.current = true;
+      if (fanfareRef.current) {
+        fanfareRef.current.currentTime = 0;
+        fanfareRef.current.play().catch(() => {});
+      }
+    }
+    if (phase !== "finished") {
+      fanfarePlayedRef.current = false;
+      if (fanfareRef.current) { fanfareRef.current.pause(); fanfareRef.current.currentTime = 0; }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
 
   const handleStart = () => { setPhase("revealing"); setRevealedCount(0); };
   const handleReset = () => { setPhase("standby"); setRevealedCount(0); setAnimating(false); fetchData(); };
