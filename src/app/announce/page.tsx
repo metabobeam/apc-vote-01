@@ -548,15 +548,15 @@ export default function AnnouncePage() {
             <>
               <button
                 onClick={reset}
-                className="font-medium rounded-xl transition-all"
-                style={{ background: "rgba(255,255,255,0.6)", backdropFilter: "blur(8px)", border: "1px solid rgba(219,112,147,0.4)", color: "#9d174d", fontSize: "clamp(12px,1vw,16px)", padding: "clamp(8px,1vh,12px) clamp(20px,2vw,32px)" }}
+                className="font-normal rounded-xl transition-all hover:opacity-70"
+                style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(255,255,255,0.1)", color: "#9ca3af", fontSize: "clamp(11px,0.85vw,14px)", padding: "clamp(6px,0.8vh,10px) clamp(16px,1.6vw,24px)" }}
               >
                 ↩ もう一度
               </button>
               <button
                 onClick={() => router.push("/kanri")}
-                className="font-medium rounded-xl transition-all"
-                style={{ background: "rgba(255,255,255,0.6)", backdropFilter: "blur(8px)", border: "1px solid rgba(219,112,147,0.4)", color: "#9d174d", fontSize: "clamp(12px,1vw,16px)", padding: "clamp(8px,1vh,12px) clamp(20px,2vw,32px)" }}
+                className="font-normal rounded-xl transition-all hover:opacity-70"
+                style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(255,255,255,0.1)", color: "#9ca3af", fontSize: "clamp(11px,0.85vw,14px)", padding: "clamp(6px,0.8vh,10px) clamp(16px,1.6vw,24px)" }}
               >
                 管理者へ
               </button>
