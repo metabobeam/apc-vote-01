@@ -53,6 +53,15 @@ export default function AnnouncePage() {
   const [showConfetti, setShowConfetti] = useState(false);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const animFrameRef = useRef<number | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    // 音声を先読み（ページロード時）
+    const audio = new Audio("/reveal-sound.mp3");
+    audio.preload = "auto";
+    audioRef.current = audio;
+    return () => { audioRef.current = null; };
+  }, []);
 
   useEffect(() => {
     if (getResultsAuth()) {
@@ -122,6 +131,12 @@ export default function AnnouncePage() {
   const startReveal = () => {
     if (!sortedResults.length) return;
     setPhase("revealing");
+
+    // 音声再生（先読み済みのため即時再生）
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(() => {/* autoplay policy で弾かれた場合は無視 */});
+    }
 
     const mc = maxCount;
     const results = sortedResults;
@@ -195,6 +210,11 @@ export default function AnnouncePage() {
   };
 
   const reset = () => {
+    // 音声停止
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
     if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     animFrameRef.current = null;
     timersRef.current.forEach(clearTimeout);
