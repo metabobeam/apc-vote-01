@@ -310,7 +310,7 @@ export default function ReviewAnnouncePage() {
                       {/* 賞名 */}
                       <p style={{
                         color: theme.accent, fontWeight: 800, lineHeight: 1.1, textAlign: "center",
-                        fontSize: "clamp(48px,7.5vw,108px)", letterSpacing: "0.06em", position: "relative", zIndex: 1,
+                        fontSize: "clamp(34px,5.25vw,76px)", letterSpacing: "0.06em", position: "relative", zIndex: 1,
                         textShadow: `0 0 30px ${theme.glow}, 0 0 60px ${theme.glow}`,
                       }}>
                         {award.awardName}
@@ -349,7 +349,7 @@ export default function ReviewAnnouncePage() {
                       <div style={{ position: "absolute", top: 0, left: "10%", right: "10%", height: "1px", background: `linear-gradient(90deg, transparent, ${theme.line}80, transparent)` }} />
                       <div style={{ position: "absolute", bottom: 0, left: "10%", right: "10%", height: "1px", background: `linear-gradient(90deg, transparent, ${theme.line}80, transparent)` }} />
                       <p style={{
-                        color: theme.accent, fontSize: "clamp(44px,7vw,104px)", fontWeight: 800,
+                        color: theme.accent, fontSize: "clamp(31px,4.9vw,73px)", fontWeight: 800,
                         letterSpacing: "0.06em", textAlign: "center", position: "relative", zIndex: 1,
                         textShadow: `0 0 40px ${theme.glow}, 0 0 80px ${theme.glow}`,
                       }}>
