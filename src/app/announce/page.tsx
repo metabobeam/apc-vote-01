@@ -14,7 +14,7 @@ interface PublicConfig {
 
 type Phase = "login" | "standby" | "revealing" | "complete";
 
-const REVEAL_DURATION = 10000; // バーが伸びきるまでの時間 (ms)
+const REVEAL_DURATION = 12000; // バーが伸びきるまでの時間 (ms)
 
 // アニメーション中: 全て青。完了後: 1位=赤、2位=オレンジ赤、他=青
 const BAR_BLUE  = "from-blue-500 to-blue-400";
