@@ -167,11 +167,11 @@ export default function JudgeAnnouncePage() {
     if (animating || revealedCount >= orderedVotes.length) return;
     setAnimating(true);
     setRevealedCount((n) => n + 1);
-    // フリップ transition が 850ms → 少し余裕を持たせて 1000ms 後に解除
+    // フリップ開始後 300ms でボタン解除（捲れ始めたらすぐ次を押せる）
     setTimeout(() => {
       setAnimating(false);
-      if (revealedCount + 1 >= orderedVotes.length) setTimeout(() => setPhase("finished"), 500);
-    }, 1000);
+      if (revealedCount + 1 >= orderedVotes.length) setTimeout(() => setPhase("finished"), 300);
+    }, 300);
   };
 
   const handleStart = () => { setPhase("revealing"); setRevealedCount(0); };
@@ -385,7 +385,7 @@ export default function JudgeAnnouncePage() {
                         height: "clamp(160px,calc(100vh - 260px),460px)",
                         transformStyle: "preserve-3d",
                         transform: revealed ? "rotateY(180deg)" : "rotateY(0deg)",
-                        transition: "transform 0.85s cubic-bezier(0.4,0,0.2,1)",
+                        transition: "transform 0.6s cubic-bezier(0.4,0,0.2,1)",
                         willChange: "transform",
                       }}>
 
