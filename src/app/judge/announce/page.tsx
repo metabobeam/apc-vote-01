@@ -453,7 +453,7 @@ export default function JudgeAnnouncePage() {
                     {/* 名前ラベル（台座下） */}
                     <p className="mt-1 text-center font-semibold truncate w-full"
                       style={{
-                        fontSize:"clamp(8px,1vw,11px)",
+                        fontSize:"clamp(24px,3vw,33px)",
                         color: revealed ? color.border : "#666",
                         maxWidth:"100%",
                       }}>
