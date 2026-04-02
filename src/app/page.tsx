@@ -74,8 +74,8 @@ export default function VotePage() {
 
   const isSameGroupOption = (option: ProductOption) => {
     if (!groupName.trim()) return false;
-    const target = option.productNumber + " " + option.description;
-    return target.includes(groupName.trim());
+    const prefix = groupName.trim().slice(0, 3);
+    return option.productNumber.slice(0, 3) === prefix;
   };
 
   const toggleSelection = (id: string) => {
