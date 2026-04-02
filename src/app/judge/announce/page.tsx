@@ -436,15 +436,22 @@ export default function JudgeAnnouncePage() {
                               <div style={{ height:"10px", background:"linear-gradient(180deg,#c8900a,#7a5200)", borderBottom:"1px solid #ffe066" }} />
                               <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"12px 0", background:color.bg, position:"relative" }}>
                                 <div style={{ position:"absolute", inset:0, pointerEvents:"none", background:"linear-gradient(170deg,rgba(255,255,255,0.18) 0%,transparent 50%)" }} />
-                                <p style={{
-                                  fontWeight:900, color:"#fff", lineHeight:1.4, position:"relative", zIndex:1,
-                                  writingMode:"vertical-rl", textOrientation:"mixed",
-                                  fontSize:"clamp(22px,3.3vw,39px)", letterSpacing:"0.08em",
-                                  textShadow:"0 2px 8px rgba(0,0,0,0.6),0 0 20px rgba(255,255,255,0.4)",
-                                  whiteSpace:"pre-wrap",
-                                }}>
-                                  {candidate?.productNumber}
-                                </p>
+                                <div style={{ display:"flex", flexDirection:"row-reverse", alignItems:"center", justifyContent:"center", gap:"4px", position:"relative", zIndex:1 }}>
+                                  {(candidate?.productNumber ?? "").split("\n").map((line, li) => (
+                                    <p key={li} style={{
+                                      fontWeight:900, color:"#fff", lineHeight:1.4, margin:0,
+                                      writingMode:"vertical-rl", textOrientation:"mixed",
+                                      fontSize: li === 0
+                                        ? "clamp(15px,2.3vw,27px)"
+                                        : "clamp(22px,3.3vw,39px)",
+                                      letterSpacing:"0.08em",
+                                      textShadow:"0 2px 8px rgba(0,0,0,0.6),0 0 20px rgba(255,255,255,0.4)",
+                                      whiteSpace:"nowrap",
+                                    }}>
+                                      {line}
+                                    </p>
+                                  ))}
+                                </div>
                               </div>
                               <div style={{ height:"10px", background:"linear-gradient(0deg,#c8900a,#7a5200)", borderTop:"1px solid #ffe066" }} />
                             </div>
