@@ -538,8 +538,8 @@ export default function JudgeAnnouncePage() {
             </button>
             <a
               href="/judge/winner"
-              className="text-gray-800 hover:text-gray-600 text-xs transition-colors"
-              style={{ fontSize: "10px", letterSpacing: "0.05em" }}
+              className="text-gray-800 hover:text-gray-600 transition-colors"
+              style={{ fontSize: "30px", letterSpacing: "0.05em" }}
             >
               優勝表示
             </a>
