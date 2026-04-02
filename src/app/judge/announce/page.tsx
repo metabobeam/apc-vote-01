@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 
 interface Candidate {
   productId: string;
@@ -137,6 +137,15 @@ export default function JudgeAnnouncePage() {
   const [phase, setPhase]         = useState<Phase>("standby");
   const [revealedCount, setRevealedCount] = useState(0);
   const [animating, setAnimating] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // 音声プリロード（初回マウント時）
+  useEffect(() => {
+    const audio = new Audio("/panel-flip-sound.mp3");
+    audio.preload = "auto";
+    audioRef.current = audio;
+    return () => { audioRef.current = null; };
+  }, []);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -165,6 +174,11 @@ export default function JudgeAnnouncePage() {
 
   const handleRevealNext = () => {
     if (animating || revealedCount >= orderedVotes.length) return;
+    // パネルをめくると同時に音を再生（遅延なし）
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(() => {});
+    }
     setAnimating(true);
     setRevealedCount((n) => n + 1);
     // フリップ開始後 300ms でボタン解除（捲れ始めたらすぐ次を押せる）
