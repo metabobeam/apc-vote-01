@@ -628,17 +628,16 @@ export default function AdminPage() {
                     <span key={name} className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm border ${voted ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-gray-100 border-gray-200 text-gray-700"}`}>
                       {voted && <span className="text-xs">✓</span>}
                       {name}
-                      {!voted && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const next = judges.filter((j) => j !== name);
-                            setJudges(next);
-                            saveJudges(next);
-                          }}
-                          className="text-gray-400 hover:text-red-500 ml-0.5 transition-colors"
-                        >×</button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (voted && !confirm(`「${name}」は投票済みです。削除してもよいですか？`)) return;
+                          const next = judges.filter((j) => j !== name);
+                          setJudges(next);
+                          saveJudges(next);
+                        }}
+                        className={`ml-0.5 transition-colors ${voted ? "text-emerald-400 hover:text-red-500" : "text-gray-400 hover:text-red-500"}`}
+                      >×</button>
                     </span>
                   );
                 })}

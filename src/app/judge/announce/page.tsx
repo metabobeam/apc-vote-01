@@ -82,7 +82,7 @@ function CrownSvg({ lit }: { lit: boolean }) {
 // 柱型パネル（発表前：審査員名表示）
 function UnrevealedPanel({ name, idx }: { name: string; idx: number }) {
   return (
-    <div className="relative w-full flex flex-col" style={{ height: "clamp(200px,26vw,320px)" }}>
+    <div className="relative w-full flex flex-col" style={{ height: "clamp(160px,calc(100vh - 260px),460px)" }}>
       {/* 左右の金柱 */}
       <div className="absolute top-0 bottom-0 left-0 w-[12%] flex flex-col"
         style={{ background: "linear-gradient(to right,#5a3800,#c8900a,#ffe066,#c8900a,#5a3800)" }}>
@@ -117,7 +117,7 @@ function UnrevealedPanel({ name, idx }: { name: string; idx: number }) {
             style={{
               writingMode: "vertical-rl",
               textOrientation: "mixed",
-              fontSize: "clamp(18px,2.8vw,32px)",
+              fontSize: "clamp(54px,8.4vw,96px)",
               letterSpacing: "0.12em",
               textShadow: "0 2px 10px rgba(0,0,0,0.8), 0 0 20px rgba(255,255,255,0.15)",
             }}>
@@ -213,7 +213,7 @@ export default function JudgeAnnouncePage() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-between py-6 px-4 overflow-hidden relative"
+    <main className="h-screen flex flex-col items-center justify-between py-4 px-4 overflow-hidden relative"
       style={{
         background: [
           "radial-gradient(ellipse at 20% 100%,rgba(180,30,0,0.45) 0%,transparent 45%)",
@@ -223,42 +223,12 @@ export default function JudgeAnnouncePage() {
         ].join(","),
       }}>
 
-      {/* ──────── 優勝発表オーバーレイ ──────── */}
+      {/* 紙吹雪オーバーレイ（優勝時のみ） */}
       {phase === "finished" && winnerIds.length > 0 && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center pointer-events-none overflow-hidden">
-          {/* 紙吹雪 */}
+        <div className="fixed inset-0 z-30 pointer-events-none overflow-hidden">
           {Array.from({ length: 120 }).map((_, i) => (
             <ConfettiPiece key={i} index={i} />
           ))}
-          {/* 優勝テキスト */}
-          <div className="relative flex flex-col items-center px-8 py-8 text-center pointer-events-auto"
-            style={{ animation: "winnerPop 0.8s cubic-bezier(0.34,1.56,0.64,1) 0.3s both" }}>
-            {/* 光の後光 */}
-            <div className="absolute inset-0 rounded-3xl pointer-events-none"
-              style={{ background: "radial-gradient(ellipse at center,rgba(255,200,50,0.25) 0%,transparent 70%)" }} />
-            <p className="font-black tracking-[0.3em] text-amber-400 mb-2"
-              style={{ fontSize: "clamp(0.9rem,2.5vw,1.4rem)", textShadow: "0 0 20px rgba(255,180,0,0.8)", letterSpacing: "0.3em" }}>
-              🎊　優　勝　🎊
-            </p>
-            {winnerIds.map((id) => {
-              const c = data!.candidates.find((cc) => cc.productId === id);
-              return c ? (
-                <p key={id} className="font-black text-white leading-tight"
-                  style={{
-                    fontSize: "clamp(2.5rem,9vw,7rem)",
-                    textShadow: "0 0 60px rgba(255,220,50,1), 0 0 120px rgba(255,150,0,0.8), 0 4px 12px rgba(0,0,0,0.9)",
-                    letterSpacing: "0.05em",
-                    animation: "textGlow 1.5s ease-in-out 1s infinite alternate",
-                  }}>
-                  {c.productNumber.split("\n")[0]}
-                </p>
-              ) : null;
-            })}
-            <p className="font-black text-amber-300 mt-3"
-              style={{ fontSize: "clamp(1rem,3vw,2rem)", textShadow: "0 0 30px rgba(255,180,0,0.8)", letterSpacing: "0.15em" }}>
-              優勝おめでとうございます！
-            </p>
-          </div>
         </div>
       )}
 
@@ -276,56 +246,100 @@ export default function JudgeAnnouncePage() {
         ))}
       </div>
 
-      {/* ヘッダー */}
-      <div className="relative z-10 text-center mb-4 w-full">
-        <div className="inline-flex items-center gap-3 mb-1">
-          <div className="h-px w-8 sm:w-16 bg-gradient-to-r from-transparent to-amber-400" />
-          <p className="text-amber-400 text-xs font-black tracking-[0.4em] uppercase">Judge Announce</p>
-          <div className="h-px w-8 sm:w-16 bg-gradient-to-l from-transparent to-amber-400" />
+      {/* ヘッダー（発表中・終了時のみ表示） */}
+      {phase !== "standby" && (
+        <div className="relative z-10 text-center mb-4 w-full">
+          <div className="inline-flex items-center gap-3 mb-1">
+            <div className="h-px w-8 sm:w-16 bg-gradient-to-r from-transparent to-amber-400" />
+            <p className="text-amber-400 text-xs font-black tracking-[0.4em] uppercase">Judge Announce</p>
+            <div className="h-px w-8 sm:w-16 bg-gradient-to-l from-transparent to-amber-400" />
+          </div>
+          <h1 className="font-black text-white"
+            style={{
+              fontSize: "clamp(4rem,12vw,7rem)",
+              textShadow: "0 0 40px rgba(255,160,50,1),0 0 80px rgba(255,100,0,0.6),0 3px 8px rgba(0,0,0,0.9)",
+              letterSpacing: "0.1em",
+            }}>
+            審査発表
+          </h1>
         </div>
-        <h1 className="font-black text-white"
-          style={{
-            fontSize: "clamp(2rem,6vw,3.5rem)",
-            textShadow: "0 0 40px rgba(255,160,50,1),0 0 80px rgba(255,100,0,0.6),0 3px 8px rgba(0,0,0,0.9)",
-            letterSpacing: "0.1em",
-          }}>
-          審査発表
-        </h1>
-        {phase === "revealing" && (
-          <p className="text-amber-300/70 text-sm mt-1">
-            残り <span className="text-white font-black">{orderedVotes.length - revealedCount}</span> 名
-          </p>
-        )}
-      </div>
+      )}
 
       {/* 待機画面 */}
-        {phase === "standby" && (
-        <div className="relative z-10 flex flex-col items-center justify-center flex-1 gap-6 text-center">
-          <p className="text-amber-100/80 text-base">
-            審査員 <span className="text-white font-black text-xl">{orderedVotes.length}</span> 名の投票が完了しています
-          </p>
-          <button onClick={handleStart}
-            className="mt-4 px-14 py-5 font-black text-white text-2xl rounded-2xl shadow-2xl transition-all hover:scale-105 active:scale-100"
-            style={{ background:"linear-gradient(135deg,#f59e0b,#dc2626)", boxShadow:"0 0 50px rgba(245,158,11,0.5),0 8px 32px rgba(0,0,0,0.5)", letterSpacing:"0.1em" }}>
-            🎤 発表開始
-          </button>
-          <a
-            href="/kanri"
-            className="text-gray-500 hover:text-gray-300 text-sm transition-colors mt-2"
+      {phase === "standby" && (
+        <div className="relative z-10 flex flex-1 flex-col items-center justify-center">
+
+          {/* 横書き「審査発表」メインタイトル */}
+          <h1
+            className="font-black text-white"
+            style={{
+              fontSize: "clamp(8rem,22vw,14rem)",
+              letterSpacing: "0.12em",
+              lineHeight: 1,
+              textShadow: "0 0 60px rgba(255,160,50,1), 0 0 120px rgba(255,100,0,0.7), 0 4px 16px rgba(0,0,0,0.9)",
+              animation: "textGlow 2s ease-in-out infinite alternate",
+            }}
           >
-            ← 管理画面にもどる
-          </a>
+            審査発表
+          </h1>
+
+          <p className="text-amber-100/50 text-sm mt-6">
+            審査員 <span className="text-white/70 font-bold">{orderedVotes.length}</span> 名の投票が完了しています
+          </p>
+
+          {/* 右下固定：発表開始ボタン＋管理画面リンク */}
+          <div className="fixed bottom-6 right-8 flex flex-col items-end gap-2 z-20">
+            <button onClick={handleStart}
+              className="font-normal rounded-lg transition-all hover:opacity-80 active:scale-95"
+              style={{
+                background: "rgba(60,60,60,0.6)",
+                border: "1px solid rgba(255,255,255,0.15)",
+                color: "#9ca3af",
+                fontSize: "clamp(11px,1vw,14px)",
+                padding: "8px 20px",
+                letterSpacing: "0.05em",
+              }}>
+              🎤 発表開始
+            </button>
+            <a
+              href="/kanri"
+              className="text-gray-600 hover:text-gray-400 text-xs transition-colors"
+            >
+              ← 管理画面にもどる
+            </a>
+          </div>
         </div>
       )}
 
       {/* 発表中 / 終了 */}
       {(phase === "revealing" || phase === "finished") && (
-        <div className="relative z-10 flex-1 w-full flex flex-col items-center gap-5">
+        <div className="relative z-10 flex-1 w-full flex flex-col items-center gap-2 overflow-hidden">
+
+          {/* 優勝バナー（ヘッダーとパネルの間） */}
+          {phase === "finished" && winnerIds.length > 0 && (
+            <div className="w-full text-center py-1 relative z-10"
+              style={{ animation: "winnerPop 0.8s cubic-bezier(0.34,1.56,0.64,1) 0.3s both" }}>
+              {winnerIds.map((id) => {
+                const c = data!.candidates.find((cc) => cc.productId === id);
+                return c ? (
+                  <p key={id} className="font-black whitespace-nowrap"
+                    style={{
+                      fontSize: "clamp(1.4rem,3.5vw,2.8rem)",
+                      color: "#fff",
+                      textShadow: "0 0 40px rgba(255,220,50,1), 0 0 80px rgba(255,150,0,0.8), 0 2px 8px rgba(0,0,0,0.9)",
+                      letterSpacing: "0.08em",
+                      animation: "textGlow 1.5s ease-in-out 1s infinite alternate",
+                    }}>
+                    優勝　{c.productNumber.replace(/\n/g, "　")}
+                  </p>
+                ) : null;
+              })}
+            </div>
+          )}
 
           {/* パネル群 */}
-          <div className="w-full overflow-x-auto pb-2" style={{ scrollbarWidth:"none" }}>
-            <div className="flex gap-2 sm:gap-3 justify-start sm:justify-center px-2"
-              style={{ minWidth:`${orderedVotes.length*110}px` }}>
+          <div className="w-full flex-1 flex flex-col justify-center px-2">
+            <div className="flex gap-1 sm:gap-2 justify-center w-full">
               {orderedVotes.map((vote, idx) => {
                 const revealed  = idx < revealedCount;
                 const isWinner  = revealed && phase==="finished" && winnerIds.includes(vote.selectedProductId);
@@ -334,8 +348,8 @@ export default function JudgeAnnouncePage() {
                 const candidate = vote.candidate;
 
                 return (
-                  <div key={vote.judgeName} className="flex-shrink-0 flex flex-col items-center"
-                    style={{ width:"clamp(88px,11vw,120px)" }}>
+                  <div key={vote.judgeName} className="flex-1 min-w-0 flex flex-col items-center"
+                    style={{ maxWidth:"160px" }}>
 
                     {/* 王冠 */}
                     <div className="w-full"
@@ -368,7 +382,7 @@ export default function JudgeAnnouncePage() {
                       {/* フリップコンテナ */}
                       <div style={{
                         position: "relative",
-                        height: "clamp(200px,26vw,320px)",
+                        height: "clamp(160px,calc(100vh - 260px),460px)",
                         transformStyle: "preserve-3d",
                         transform: revealed ? "rotateY(180deg)" : "rotateY(0deg)",
                         transition: "transform 0.85s cubic-bezier(0.4,0,0.2,1)",
@@ -386,7 +400,7 @@ export default function JudgeAnnouncePage() {
                           backfaceVisibility:"hidden", WebkitBackfaceVisibility:"hidden",
                           transform:"rotateY(180deg)",
                         }}>
-                          <div style={{ position:"relative", width:"100%", display:"flex", flexDirection:"column", height:"clamp(200px,26vw,320px)" }}>
+                          <div style={{ position:"relative", width:"100%", display:"flex", flexDirection:"column", height:"clamp(160px,calc(100vh - 260px),460px)" }}>
                             {/* 左柱 */}
                             <div style={{ position:"absolute", top:0, bottom:0, left:0, width:"12%", background:"linear-gradient(to right,#5a3800,#c8900a,#ffe066,#c8900a,#5a3800)" }}>
                               {[0.25,0.5,0.75].map((p) => (
@@ -406,24 +420,16 @@ export default function JudgeAnnouncePage() {
                             {/* 中央カラーエリア */}
                             <div style={{ position:"absolute", left:"11%", right:"11%", top:0, bottom:0, display:"flex", flexDirection:"column" }}>
                               <div style={{ height:"10px", background:"linear-gradient(180deg,#c8900a,#7a5200)", borderBottom:"1px solid #ffe066" }} />
-                              <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"space-between", padding:"12px 0", background:color.bg, position:"relative" }}>
+                              <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"12px 0", background:color.bg, position:"relative" }}>
                                 <div style={{ position:"absolute", inset:0, pointerEvents:"none", background:"linear-gradient(170deg,rgba(255,255,255,0.18) 0%,transparent 50%)" }} />
                                 <p style={{
-                                  fontWeight:900, color:"#fff", lineHeight:1.2, position:"relative", zIndex:1,
+                                  fontWeight:900, color:"#fff", lineHeight:1.4, position:"relative", zIndex:1,
                                   writingMode:"vertical-rl", textOrientation:"mixed",
                                   fontSize:"clamp(15px,2.2vw,26px)", letterSpacing:"0.08em",
                                   textShadow:"0 2px 8px rgba(0,0,0,0.6),0 0 20px rgba(255,255,255,0.4)",
+                                  whiteSpace:"pre-wrap",
                                 }}>
-                                  {candidate?.productNumber.split("\n")[0]}
-                                </p>
-                                <div style={{ width:"80%", borderTop:"1px solid rgba(255,255,255,0.3)" }} />
-                                <p style={{
-                                  fontWeight:700, color:"rgba(255,255,255,0.75)", lineHeight:1.2, position:"relative", zIndex:1,
-                                  writingMode:"vertical-rl", textOrientation:"mixed",
-                                  fontSize:"clamp(10px,1.4vw,16px)", letterSpacing:"0.1em",
-                                  textShadow:"0 1px 4px rgba(0,0,0,0.6)",
-                                }}>
-                                  {vote.judgeName}
+                                  {candidate?.productNumber}
                                 </p>
                               </div>
                               <div style={{ height:"10px", background:"linear-gradient(0deg,#c8900a,#7a5200)", borderTop:"1px solid #ffe066" }} />
@@ -462,24 +468,28 @@ export default function JudgeAnnouncePage() {
             </div>
           </div>
 
-          {/* ダミースペーサー */}
-          <div />
-
-          {/* 操作ボタン */}
-          <div className="w-full max-w-lg flex flex-col items-center gap-3 mt-1">
+          {/* 右下固定：操作ボタン */}
+          <div className="fixed bottom-6 right-8 z-20 flex flex-col items-end gap-2">
             {phase==="revealing"&&revealedCount<orderedVotes.length&&(
               <button onClick={handleRevealNext} disabled={animating}
-                className={`w-full py-5 rounded-2xl font-black text-white text-xl transition-all ${animating?"opacity-60 cursor-not-allowed":"hover:scale-[1.02] active:scale-100"}`}
-                style={{ background:"linear-gradient(135deg,#6366f1,#8b5cf6)", boxShadow:animating?"none":"0 0 40px rgba(99,102,241,0.4),0 8px 24px rgba(0,0,0,0.4)", letterSpacing:"0.05em" }}>
-                {animating?"発表中...":`次の審査員を発表　${revealedCount+1} / ${orderedVotes.length}`}
+                className={`font-normal rounded-lg transition-all ${animating?"opacity-50 cursor-not-allowed":"hover:opacity-80 active:scale-95"}`}
+                style={{
+                  background: "rgba(60,60,60,0.6)",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  color: animating ? "#6b7280" : "#9ca3af",
+                  fontSize: "clamp(11px,1vw,14px)",
+                  padding: "8px 20px",
+                  letterSpacing: "0.05em",
+                }}>
+                {animating ? "発表中..." : `次の審査員を発表　${revealedCount+1} / ${orderedVotes.length}`}
               </button>
             )}
             {phase==="finished"&&(
-              <a href="/judge" className="text-indigo-400 hover:text-indigo-300 text-sm transition-colors">
+              <a href="/judge" className="text-gray-600 hover:text-gray-400 text-xs transition-colors">
                 ← 審査員投票ページへ
               </a>
             )}
-            <button onClick={handleReset} className="text-gray-700 hover:text-gray-400 text-sm transition-colors">
+            <button onClick={handleReset} className="text-gray-700 hover:text-gray-500 text-xs transition-colors">
               ↩ 最初からやり直す
             </button>
           </div>
