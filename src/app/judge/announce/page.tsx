@@ -461,7 +461,7 @@ export default function JudgeAnnouncePage() {
                                 <div style={{ position:"absolute", inset:0, pointerEvents:"none", background:"linear-gradient(170deg,rgba(255,255,255,0.18) 0%,transparent 50%)" }} />
                                 <div style={{ display:"flex", flexDirection:"row-reverse", alignItems:"center", justifyContent:"center", gap:"4px", position:"relative", zIndex:1, overflow:"hidden", maxHeight:"100%" }}>
                                   {(candidate?.productNumber ?? "").split("\n").map((line, li) => {
-                                    const isLong = li === 0 && line.length >= 15;
+                                    const isLong = li === 0 && line.length >= 13;
                                     return (
                                       <p key={li} style={{
                                         fontWeight:900, color:"#fff", lineHeight:1.4, margin:0,
