@@ -379,12 +379,9 @@ export default function AnnouncePage() {
             className="flex items-center gap-4 flex-shrink-0"
             style={{ borderBottom: "1px solid rgba(219,112,147,0.2)", paddingBottom: "clamp(8px,1vh,14px)", marginBottom: "clamp(8px,1vh,14px)" }}
           >
-            <span className="tracking-widest flex-shrink-0" style={{ fontSize: "clamp(10px,0.75vw,12px)", width: "clamp(90px,11vw,180px)", color: "rgba(157,23,77,0.6)" }}>お題</span>
+            <span className="tracking-widest flex-shrink-0" style={{ fontSize: "clamp(10px,0.75vw,12px)", width: "clamp(160px,20vw,300px)", color: "rgba(157,23,77,0.6)" }}>お題</span>
             <span className="uppercase tracking-widest flex-1" style={{ fontSize: "clamp(10px,0.75vw,12px)", color: "rgba(157,23,77,0.6)" }}>← VOTES</span>
-            <span
-              className="uppercase tracking-widest text-right flex-shrink-0 transition-opacity duration-700"
-              style={{ fontSize: "clamp(10px,0.75vw,12px)", width: "clamp(140px,16vw,240px)", color: "rgba(157,23,77,0.6)", opacity: phase === "standby" ? 0 : 1 }}
-            >COUNT</span>
+            <span className="flex-shrink-0" style={{ width: "clamp(54px,7vw,110px)" }} />
           </div>
 
           {/* バー行 */}
@@ -413,13 +410,13 @@ export default function AnnouncePage() {
                 <div key={result.productId} className="flex items-center gap-4 flex-1" style={{ minHeight: 0 }}>
 
                   {/* 商品番号（改行対応） */}
-                  <div className="flex-shrink-0 flex flex-col justify-center" style={{ width: "clamp(90px,11vw,180px)" }}>
+                  <div className="flex-shrink-0 flex flex-col justify-center" style={{ width: "clamp(160px,20vw,300px)" }}>
                     {result.productNumber.split("\n").map((line, li) => (
                       <span
                         key={li}
                         className="font-mono font-black tracking-widest block leading-tight"
                         style={{
-                          fontSize: li === 0 ? "clamp(14px,1.4vw,22px)" : "clamp(11px,1vw,16px)",
+                          fontSize: li === 0 ? "clamp(21px,2.1vw,33px)" : "clamp(16px,1.5vw,24px)",
                           color: revealedRank1 && isRank1 ? "#7f1d1d"
                                : revealedRank2 && isRank2 ? "#7c2d12"
                                : "#4a1942",
@@ -451,6 +448,7 @@ export default function AnnouncePage() {
                         style={{
                           width: `${barW}%`,
                           willChange: phase === "revealing" ? "width" : "auto",
+                          overflow: "visible",
                           boxShadow: revealedRank1 && isRank1
                             ? "0 0 28px rgba(239,68,68,0.7), 0 0 10px rgba(255,255,255,0.4)"
                             : revealedRank2 && isRank2
@@ -461,64 +459,53 @@ export default function AnnouncePage() {
                         {phase === "revealing" && (
                           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-[scan_1.8s_ease-in-out_infinite]" />
                         )}
+                        {/* 先端に追従するカウント数値 */}
+                        <span
+                          ref={(el) => { countRefs.current[index] = el; }}
+                          className="absolute top-1/2 -translate-y-1/2 font-mono font-black pointer-events-none whitespace-nowrap"
+                          style={{
+                            left: "100%",
+                            paddingLeft: "clamp(4px,0.4vw,8px)",
+                            fontSize: "clamp(18px,2vw,32px)",
+                            color: revealedRank1 && isRank1 ? "#991b1b"
+                                 : revealedRank2 && isRank2 ? "#9a3412"
+                                 : "#be185d",
+                            textShadow: revealedRank1 && isRank1 ? "0 0 12px rgba(239,68,68,0.6)" : "none",
+                            opacity: phase === "standby" ? 0 : 1,
+                          }}
+                        >
+                          {shownCount}
+                        </span>
                       </div>
                       <div className="absolute left-0 inset-y-0 w-px bg-pink-400/40 z-10" />
                     </div>
                   </div>
 
-                  {/* トロフィー＋票数の複合列（revealing / complete で表示） */}
+                  {/* トロフィー列（右端） */}
                   <div
-                    className="flex-shrink-0 flex items-center gap-2 transition-opacity duration-500"
-                    style={{
-                      width: "clamp(140px,16vw,240px)",
-                      opacity: phase === "standby" ? 0 : 1,
-                    }}
+                    className="flex-shrink-0 flex items-center justify-center"
+                    style={{ width: "clamp(54px,7vw,110px)" }}
                   >
-                    {/* トロフィー（投票数の左側） */}
-                    <div className="flex-shrink-0 flex items-center justify-center" style={{ width: "clamp(54px,6.5vw,100px)" }}>
-                      {/* 2位: 先に登場・控えめ演出 */}
-                      {revealedRank2 && isRank2 && (
-                        <span
-                          className="inline-block"
-                          style={{
-                            fontSize: "clamp(54px,6vw,96px)",
-                            animation: "rank2Drop 1.1s ease-out forwards, trophyFloat 2.5s ease-in-out 1.3s infinite",
-                            filter: "drop-shadow(0 0 10px rgba(192,192,192,0.8))",
-                          }}
-                        >🥈</span>
-                      )}
-                      {/* 1位: 後から登場・最大限大げさ */}
-                      {revealedRank1 && isRank1 && (
-                        <span
-                          className="inline-block"
-                          style={{
-                            fontSize: "clamp(54px,6vw,96px)",
-                            animation: "rank1Drop 2.2s ease-out forwards, trophy1Float 1.8s ease-in-out 2.4s infinite",
-                            filter: "drop-shadow(0 0 18px rgba(255,215,0,1))",
-                          }}
-                        >🥇</span>
-                      )}
-                    </div>
-                    {/* 票数・% */}
-                    <div className="text-right flex-1">
+                    {revealedRank2 && isRank2 && (
                       <span
-                        ref={(el) => { countRefs.current[index] = el; }}
-                        className="font-mono font-black"
+                        className="inline-block"
                         style={{
-                          fontSize: "clamp(24px,2.4vw,40px)",
-                          color: revealedRank1 && isRank1 ? "#991b1b"
-                               : revealedRank2 && isRank2 ? "#9a3412"
-                               : "#be185d",
-                          textShadow: revealedRank1 && isRank1 ? "0 0 12px rgba(239,68,68,0.6)" : "none",
+                          fontSize: "clamp(54px,6vw,96px)",
+                          animation: "rank2Drop 1.1s ease-out forwards, trophyFloat 2.5s ease-in-out 1.3s infinite",
+                          filter: "drop-shadow(0 0 10px rgba(192,192,192,0.8))",
                         }}
-                      >
-                        {shownCount}
-                      </span>
-                      <span style={{ fontSize: "clamp(10px,0.7vw,12px)", color: "rgba(157,23,77,0.5)", marginLeft: "2px" }}>票</span>
-                      <div className="font-mono" style={{ fontSize: "clamp(10px,0.75vw,12px)", color: "rgba(157,23,77,0.4)" }}>
-                        {result.percentage}%
-                      </div>
-                    </div>
+                      >🥈</span>
+                    )}
+                    {revealedRank1 && isRank1 && (
+                      <span
+                        className="inline-block"
+                        style={{
+                          fontSize: "clamp(54px,6vw,96px)",
+                          animation: "rank1Drop 2.2s ease-out forwards, trophy1Float 1.8s ease-in-out 2.4s infinite",
+                          filter: "drop-shadow(0 0 18px rgba(255,215,0,1))",
+                        }}
+                      >🥇</span>
+                    )}
                   </div>
                 </div>
               );
