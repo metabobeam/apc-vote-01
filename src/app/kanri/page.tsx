@@ -690,16 +690,20 @@ export default function AdminPage() {
                 </div>
                 {voteStats ? (() => {
                   const maxCount = Math.max(...voteStats.results.map((r) => r.count), 1);
-                  const sorted = [...voteStats.results].sort((a, b) => b.count - a.count);
+                  const optionOrder = config?.options.map((o) => o.id) ?? [];
+                  const sorted = [...voteStats.results].sort(
+                    (a, b) => optionOrder.indexOf(a.productId) - optionOrder.indexOf(b.productId)
+                  );
+                  const topCount = Math.max(...sorted.map((r) => r.count), 0);
                   return (
                     <>
                       <p className="text-xs text-gray-500 mb-3">
                         総投票数：<span className="font-black text-emerald-600 text-sm">{voteStats.totalVotes}</span> 票
                       </p>
                       <div className="flex flex-col gap-2.5">
-                        {sorted.map((r, i) => {
+                        {sorted.map((r) => {
                           const pct = maxCount > 0 ? (r.count / maxCount) * 100 : 0;
-                          const isFirst = i === 0 && r.count > 0;
+                          const isFirst = topCount > 0 && r.count === topCount;
                           return (
                             <div key={r.productId}>
                               <div className="flex items-center justify-between mb-1">
