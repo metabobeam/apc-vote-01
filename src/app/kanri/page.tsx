@@ -78,6 +78,9 @@ export default function AdminPage() {
   const [newJudgeName, setNewJudgeName] = useState("");
   const [judgeData, setJudgeData] = useState<JudgeData | null>(null);
   const [showWinner, setShowWinner] = useState(false);
+  const [backupMsg, setBackupMsg] = useState("");
+  const [restoreMsg, setRestoreMsg] = useState("");
+  const [restoring, setRestoring] = useState(false);
 
   const [reviewData, setReviewData] = useState<ReviewData | null>(null);
   const [reviewResetConfirm, setReviewResetConfirm] = useState<string | null>(null);
@@ -1176,6 +1179,100 @@ export default function AdminPage() {
             })()}
           </div>
 
+
+          {/* ── バックアップ・リストア ── */}
+          <div className="mt-8 bg-white border-2 border-gray-100 rounded-2xl p-6 shadow-sm">
+            <h2 className="text-base font-bold text-gray-800 mb-4">💾 バックアップ・リストア</h2>
+
+            <div className="flex flex-col gap-4">
+              {/* バックアップ */}
+              <div className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
+                <div>
+                  <p className="text-sm font-semibold text-gray-700">データをバックアップ</p>
+                  <p className="text-xs text-gray-400 mt-0.5">設定・投票データ全てをJSONファイルでダウンロード</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      setBackupMsg("ダウンロード中...");
+                      const res = await fetch("/api/admin/backup");
+                      if (!res.ok) throw new Error("失敗");
+                      const blob = await res.blob();
+                      const cd = res.headers.get("Content-Disposition") ?? "";
+                      const match = cd.match(/filename="([^"]+)"/);
+                      const filename = match?.[1] ?? "backup.json";
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url; a.download = filename; a.click();
+                      URL.revokeObjectURL(url);
+                      setBackupMsg("✅ ダウンロード完了");
+                    } catch {
+                      setBackupMsg("❌ 失敗しました");
+                    }
+                    setTimeout(() => setBackupMsg(""), 3000);
+                  }}
+                  className="shrink-0 ml-4 bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors shadow-sm flex items-center gap-2"
+                >
+                  📥 ダウンロード
+                </button>
+              </div>
+              {backupMsg && <p className="text-xs text-center text-gray-500">{backupMsg}</p>}
+
+              {/* リストア */}
+              <div className="bg-rose-50 border border-rose-100 rounded-xl px-4 py-3">
+                <p className="text-sm font-semibold text-rose-700">データをリストア</p>
+                <p className="text-xs text-rose-400 mt-0.5 mb-3">バックアップJSONを選択すると全データが上書き復元されます</p>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="file"
+                    accept=".json,application/json"
+                    id="restore-file-input"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      if (!window.confirm(`「${file.name}」でデータを上書き復元します。現在のデータは失われます。よろしいですか？`)) {
+                        e.target.value = "";
+                        return;
+                      }
+                      setRestoring(true);
+                      setRestoreMsg("");
+                      try {
+                        const text = await file.text();
+                        const json = JSON.parse(text);
+                        const res = await fetch("/api/admin/backup", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify(json),
+                        });
+                        const result = await res.json() as { ok?: boolean; error?: string; restored?: Record<string, number> };
+                        if (result.ok) {
+                          const r = result.restored ?? {};
+                          setRestoreMsg(`✅ 復元完了：設定${r.config}件・投票${r.votes}件・審査${r.judgeVotes}件・討議${r.reviewScores}件`);
+                          fetchConfig();
+                        } else {
+                          setRestoreMsg(`❌ エラー：${result.error}`);
+                        }
+                      } catch {
+                        setRestoreMsg("❌ ファイルの読み込みに失敗しました");
+                      } finally {
+                        setRestoring(false);
+                        e.target.value = "";
+                      }
+                    }}
+                  />
+                  <label
+                    htmlFor="restore-file-input"
+                    className={`cursor-pointer shrink-0 border border-rose-300 text-rose-600 hover:bg-rose-100 text-sm font-semibold px-4 py-2 rounded-xl transition-colors flex items-center gap-2 ${restoring ? "opacity-50 pointer-events-none" : ""}`}
+                  >
+                    {restoring ? "⏳ 復元中..." : "📤 ファイルを選択"}
+                  </label>
+                  {restoreMsg && <p className="text-xs text-gray-600">{restoreMsg}</p>}
+                </div>
+              </div>
+            </div>
+          </div>
 
           </>
         )}
