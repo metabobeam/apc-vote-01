@@ -408,6 +408,27 @@ export default function AdminPage() {
         {/* Dashboard */}
         {step === "dashboard" && config && (
           <>
+          {/* ── Topへボタン（右下固定） ── */}
+          <button
+            type="button"
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            style={{
+              position: "fixed", bottom: "24px", right: "24px", zIndex: 100,
+              background: "#4f46e5", color: "#fff",
+              border: "none", borderRadius: "50%",
+              width: "44px", height: "44px",
+              fontSize: "18px", cursor: "pointer",
+              boxShadow: "0 4px 12px rgba(79,70,229,0.4)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              transition: "background 0.2s, transform 0.15s",
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "#4338ca"; (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.1)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "#4f46e5"; (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)"; }}
+            title="Topへ"
+          >
+            ↑
+          </button>
+
           {/* ── 固定ナビゲーションメニュー ── */}
           <nav style={{
             position: "sticky", top: 0, zIndex: 50,
