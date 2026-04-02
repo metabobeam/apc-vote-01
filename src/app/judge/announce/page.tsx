@@ -439,7 +439,7 @@ export default function JudgeAnnouncePage() {
                                 <p style={{
                                   fontWeight:900, color:"#fff", lineHeight:1.4, position:"relative", zIndex:1,
                                   writingMode:"vertical-rl", textOrientation:"mixed",
-                                  fontSize:"clamp(15px,2.2vw,26px)", letterSpacing:"0.08em",
+                                  fontSize:"clamp(22px,3.3vw,39px)", letterSpacing:"0.08em",
                                   textShadow:"0 2px 8px rgba(0,0,0,0.6),0 0 20px rgba(255,255,255,0.4)",
                                   whiteSpace:"pre-wrap",
                                 }}>
