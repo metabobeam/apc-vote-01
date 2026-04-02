@@ -268,6 +268,17 @@ export default function VotePage() {
                   </label>
                   <div className="flex flex-col gap-3">
                     <div>
+                      <p className="text-slate-400 text-xs mb-1.5">所属組</p>
+                      <input
+                        type="text"
+                        value={groupName}
+                        onChange={(e) => setGroupName(e.target.value)}
+                        placeholder="例: 鷺組"
+                        className="w-full bg-slate-800/80 border border-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 outline-none transition-all text-sm sm:text-base"
+                        autoComplete="off"
+                      />
+                    </div>
+                    <div>
                       <p className="text-slate-400 text-xs mb-1.5">社員番号</p>
                       <input
                         type="text"
@@ -275,17 +286,6 @@ export default function VotePage() {
                         value={employeeNumber}
                         onChange={(e) => setEmployeeNumber(normalizeEmployeeNumber(e.target.value))}
                         placeholder="例: 12345"
-                        className="w-full bg-slate-800/80 border border-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 outline-none transition-all text-sm sm:text-base"
-                        autoComplete="off"
-                      />
-                    </div>
-                    <div>
-                      <p className="text-slate-400 text-xs mb-1.5">所属組</p>
-                      <input
-                        type="text"
-                        value={groupName}
-                        onChange={(e) => setGroupName(e.target.value)}
-                        placeholder="例: 鷺組"
                         className="w-full bg-slate-800/80 border border-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 outline-none transition-all text-sm sm:text-base"
                         autoComplete="off"
                       />
