@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 interface VoteRecord {
   id: string;
   employeeNumber: string;
+  groupName: string;
   productNumbers: string[];
   timestamp: string;
   isDuplicate: boolean;
@@ -167,7 +168,7 @@ export default function VoteManagePage() {
                     vote.isDuplicate ? "bg-rose-950/20 hover:bg-rose-950/30" : "hover:bg-slate-800/30"
                   }`}
                 >
-                  {/* 社員番号 */}
+                  {/* 社員番号 + 組番号 */}
                   <div className="flex items-center gap-2 min-w-0">
                     {vote.isDuplicate && (
                       <span className="flex-shrink-0 text-xs bg-rose-500/20 border border-rose-500/40 text-rose-400 px-1.5 py-0.5 rounded font-bold">
@@ -177,6 +178,11 @@ export default function VoteManagePage() {
                     <span className="font-mono text-sm text-slate-200 truncate">
                       {vote.employeeNumber}
                     </span>
+                    {vote.groupName && (
+                      <span className="flex-shrink-0 text-xs text-slate-400 bg-slate-800 border border-slate-700 px-1.5 py-0.5 rounded font-mono">
+                        {vote.groupName.slice(0, 3)}
+                      </span>
+                    )}
                   </div>
 
                   {/* 投票作品 */}

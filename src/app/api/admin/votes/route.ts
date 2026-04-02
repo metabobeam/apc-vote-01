@@ -14,6 +14,7 @@ export async function GET() {
     const result = votes.map((v) => ({
       id: v.id,
       employeeNumber: v.employeeNumber,
+      groupName: v.groupName ?? "",
       productNumbers: v.selectedProductIds.map(
         (pid) => config.options.find((o) => o.id === pid)?.productNumber ?? pid
       ),
