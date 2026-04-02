@@ -408,9 +408,46 @@ export default function AdminPage() {
         {/* Dashboard */}
         {step === "dashboard" && config && (
           <>
+          {/* ── 固定ナビゲーションメニュー ── */}
+          <nav style={{
+            position: "sticky", top: 0, zIndex: 50,
+            background: "rgba(249,250,251,0.95)",
+            backdropFilter: "blur(8px)",
+            borderBottom: "1px solid #e5e7eb",
+            marginLeft: "-1rem", marginRight: "-1rem",
+            padding: "8px 16px",
+            display: "flex", gap: "6px", flexWrap: "wrap",
+            marginBottom: "8px",
+          }}>
+            {[
+              { href: "#sec-basic",   label: "⚙️ 基本設定" },
+              { href: "#sec-group",   label: "🏠 組管理" },
+              { href: "#sec-options", label: "📝 発表お題" },
+              { href: "#sec-vote",    label: "🗳️ 投票管理" },
+              { href: "#sec-review",  label: "📋 討議班審査" },
+              { href: "#sec-judge",   label: "⚖️ 審査員" },
+              { href: "#sec-winner",  label: "🏆 優勝決定" },
+              { href: "#sec-backup",  label: "💾 バックアップ" },
+            ].map(({ href, label }) => (
+              <a key={href} href={href}
+                style={{
+                  fontSize: "12px", fontWeight: 600,
+                  padding: "4px 10px", borderRadius: "20px",
+                  background: "#f3f4f6", color: "#374151",
+                  textDecoration: "none", border: "1px solid #e5e7eb",
+                  whiteSpace: "nowrap", transition: "background 0.15s",
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = "#e0e7ff"; (e.currentTarget as HTMLAnchorElement).style.color = "#4338ca"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = "#f3f4f6"; (e.currentTarget as HTMLAnchorElement).style.color = "#374151"; }}
+              >
+                {label}
+              </a>
+            ))}
+          </nav>
+
           <form onSubmit={handleSave} className="flex flex-col gap-6">
             {/* Basic Settings */}
-            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+            <div id="sec-basic" className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
               <h2 className="text-gray-700 font-semibold text-sm tracking-wide mb-5 flex items-center gap-2">
                 <span className="w-2 h-2 bg-cyan-500 rounded-full" />
                 基本設定
@@ -506,7 +543,7 @@ export default function AdminPage() {
             </div>
 
             {/* ── 組管理 ── */}
-            <div className="bg-white border-2 border-orange-100 rounded-2xl p-6 shadow-sm">
+            <div id="sec-group" className="bg-white border-2 border-orange-100 rounded-2xl p-6 shadow-sm">
               <div className="flex items-center mb-4">
                 <h2 className="text-base font-bold text-gray-800">🏠 組管理</h2>
               </div>
@@ -570,7 +607,7 @@ export default function AdminPage() {
             </div>
 
             {/* Options */}
-            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+            <div id="sec-options" className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-gray-700 font-semibold text-sm tracking-wide flex items-center gap-2">
                   <span className="w-2 h-2 bg-indigo-500 rounded-full" />
@@ -633,7 +670,7 @@ export default function AdminPage() {
             </div>
 
             {/* Actions */}
-            <div className="flex flex-col gap-3">
+            <div id="sec-vote" className="flex flex-col gap-3">
 
               <div className="border-t border-gray-200 pt-3">
                 {!resetConfirm ? (
@@ -758,7 +795,7 @@ export default function AdminPage() {
           </div>
 
           {/* ── 討議班審査管理カード ── */}
-          <div className="bg-white border-2 border-teal-100 rounded-2xl p-6 shadow-sm">
+          <div id="sec-review" className="bg-white border-2 border-teal-100 rounded-2xl p-6 shadow-sm">
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-base font-bold text-gray-800">📋 討議班審査管理</h2>
               <button
@@ -1008,7 +1045,7 @@ export default function AdminPage() {
           </div>
 
           {/* ── 審査員管理 ── */}
-          <div className="bg-white border-2 border-indigo-100 rounded-2xl p-6 shadow-sm">
+          <div id="sec-judge" className="bg-white border-2 border-indigo-100 rounded-2xl p-6 shadow-sm">
             <div className="flex items-center mb-4">
               <h2 className="text-base font-bold text-gray-800">⚖️ 審査員管理</h2>
             </div>
@@ -1115,7 +1152,7 @@ export default function AdminPage() {
           </div>
 
           {/* ── 優勝決定画面 ── */}
-          <div className="mt-8 bg-white border-2 border-amber-100 rounded-2xl p-6 shadow-sm">
+          <div id="sec-winner" className="mt-8 bg-white border-2 border-amber-100 rounded-2xl p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base font-bold text-gray-800">🏆 優勝決定</h2>
               <div className="flex gap-2">
@@ -1181,7 +1218,7 @@ export default function AdminPage() {
 
 
           {/* ── バックアップ・リストア ── */}
-          <div className="mt-8 bg-white border-2 border-gray-100 rounded-2xl p-6 shadow-sm">
+          <div id="sec-backup" className="mt-8 bg-white border-2 border-gray-100 rounded-2xl p-6 shadow-sm">
             <h2 className="text-base font-bold text-gray-800 mb-4">💾 バックアップ・リストア</h2>
 
             <div className="flex flex-col gap-4">
