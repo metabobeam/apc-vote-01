@@ -199,6 +199,7 @@ interface FeedItem {
 export default function DashboardPage() {
   const router = useRouter();
   const [data,       setData]       = useState<DashboardData | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [countdown,  setCountdown]  = useState(REFRESH_SEC);
   const [loading,    setLoading]    = useState(true);
   const [tick,       setTick]       = useState(0);
@@ -244,24 +245,33 @@ export default function DashboardPage() {
     }
   };
 
+  // ── タイムアウト付きfetch ────────────────────────────────────────────────
+  const fetchWithTimeout = (url: string, ms = 10000) => {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), ms);
+    return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(id));
+  };
+
   // ── データ取得 ──────────────────────────────────────────────────────────
   const fetchData = useCallback(async () => {
     try {
-      const [cfgRes, statsRes, votesRes] = await Promise.all([
-        fetch("/api/config"),
-        fetch("/api/results"),
-        fetch("/api/admin/votes"),
+      // 統計・設定は必須（失敗したらエラー表示）
+      const [cfgRes, statsRes] = await Promise.all([
+        fetchWithTimeout("/api/config"),
+        fetchWithTimeout("/api/results"),
       ]);
+      if (!cfgRes.ok || !statsRes.ok) throw new Error("API error");
       const cfg   = await cfgRes.json();
       const stats = await statsRes.json();
+      setFetchError(null);
 
-      // ── ライブフィード更新 ──
-      const votesData = await votesRes.json();
+      // ── ライブフィード更新（/api/results の recentVotes を使用 → 403不要） ──
       const allVotes: { id: string; employeeNumber: string; groupName: string; timestamp: string }[] =
-        (votesData.votes ?? []).sort(
-          (a: { timestamp: string }, b: { timestamp: string }) =>
+        ((stats.recentVotes ?? []) as { id: string; employeeNumber: string; groupName: string; timestamp: string }[])
+          .slice()
+          .sort((a: { timestamp: string }, b: { timestamp: string }) =>
             new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-        );
+          );
 
       const newItems: FeedItem[] = [];
       for (const v of allVotes) {
@@ -296,8 +306,9 @@ export default function DashboardPage() {
       for (const { group, count } of (stats.votersByGroup ?? [])) {
         if (!(cfg.groups ?? []).includes(group)) groups.push({ group, voted: count, total: 0 });
       }
-      const totalParticipants = Object.values(participants as Record<string, number>)
-        .reduce((a: number, b: number) => a + b, 0);
+      // cfg.groups に現在登録されている組のみ集計（削除済み組の古いエントリを除外）
+      const totalParticipants = (cfg.groups ?? [] as string[])
+        .reduce((a: number, g: string) => a + (participants[g] ?? 0), 0);
 
       setData({
         title: cfg.title ?? "社員投票",
@@ -306,7 +317,9 @@ export default function DashboardPage() {
         groups,
         lastUpdated: new Date().toLocaleTimeString("ja-JP"),
       });
-    } catch { /* ignore */ } finally { setLoading(false); }
+    } catch (e) {
+      setFetchError(e instanceof Error && e.name === "AbortError" ? "タイムアウト（回線が遅い可能性）" : "データ取得に失敗しました");
+    } finally { setLoading(false); }
   }, []);
 
   useEffect(() => {
@@ -479,6 +492,15 @@ export default function DashboardPage() {
         {loading ? (
           <div style={{ display: "flex", justifyContent: "center", alignItems: "center", flex: 1 }}>
             <div style={{ width: "40px", height: "40px", border: `3px solid rgba(180,195,230,0.15)`, borderTop: `3px solid ${M.accent}`, borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+          </div>
+        ) : fetchError && !data ? (
+          <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", flex: 1, gap: "16px" }}>
+            <div style={{ fontSize: "32px" }}>⚠️</div>
+            <p style={{ color: M.red, fontSize: "16px", fontWeight: 700 }}>{fetchError}</p>
+            <p style={{ color: M.silverFaint, fontSize: "12px" }}>次の更新まで自動でリトライします（{countdown}秒後）</p>
+            <button onClick={fetchData} style={{ padding: "8px 20px", background: M.accentDim, border: `1px solid ${M.accent}`, borderRadius: "8px", color: M.accent, cursor: "pointer", fontSize: "13px" }}>
+              今すぐ再試行
+            </button>
           </div>
         ) : data ? (
           <div style={{ display: "grid", gridTemplateColumns: "280px 1fr 260px", gap: "14px", flex: 1, overflow: "hidden",

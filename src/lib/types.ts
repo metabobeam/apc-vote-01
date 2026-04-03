@@ -49,6 +49,7 @@ export interface VoteStats {
   totalVotes: number;
   voterCount: number;                          // 投票人数（重複除外）
   votersByGroup: { group: string; count: number }[]; // 班ごとの投票人数
+  recentVotes: { id: string; employeeNumber: string; groupName: string; timestamp: string }[]; // ダッシュボード用直近投票
   maxSelections: number;
   results: VoteResult[];
   lastUpdated: string;

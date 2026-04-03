@@ -45,10 +45,23 @@ export async function GET() {
       .map(([group, count]) => ({ group, count }))
       .sort((a, b) => a.group.localeCompare(b.group, "ja"));
 
+    // ダッシュボードのライブログ用（全件、タイムスタンプ降順）
+    const recentVotes = votes
+      .slice()
+      .sort((a, b) => (a.timestamp > b.timestamp ? -1 : 1))
+      .slice(0, 200)
+      .map((v) => ({
+        id: v.id,
+        employeeNumber: v.employeeNumber,
+        groupName: v.groupName ?? "",
+        timestamp: v.timestamp,
+      }));
+
     const stats: VoteStats = {
       totalVotes,
       voterCount,
       votersByGroup,
+      recentVotes,
       maxSelections: config.maxSelections ?? 1,
       results,
       lastUpdated: new Date().toISOString(),
