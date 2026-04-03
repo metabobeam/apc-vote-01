@@ -186,6 +186,43 @@ body {
   background-color: #020817;
 }
 
+/* シルバーメタル基調の背景グリッド（社員投票ページ専用） */
+.metal-grid-bg {
+  background-image:
+    linear-gradient(rgba(160, 168, 185, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(160, 168, 185, 0.055) 1px, transparent 1px);
+  background-size: 44px 44px;
+  background-color: #0c0c0f;
+}
+
+/* シルバーカードグロー */
+@keyframes metal-glow-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 35px rgba(160, 170, 190, 0.18),
+      0 0 70px rgba(160, 170, 190, 0.07),
+      inset 0 0 40px rgba(160, 170, 190, 0.025);
+  }
+  50% {
+    box-shadow:
+      0 0 55px rgba(180, 190, 210, 0.28),
+      0 0 110px rgba(180, 190, 210, 0.11),
+      inset 0 0 60px rgba(180, 190, 210, 0.05);
+  }
+}
+.metal-glow-card {
+  animation: metal-glow-pulse 3s ease-in-out infinite;
+}
+
+/* シルバーバッジパルス */
+@keyframes metal-badge-pulse {
+  0%, 100% { box-shadow: 0 0 7px rgba(160,170,190,0.55), 0 0 18px rgba(160,170,190,0.18); }
+  50%       { box-shadow: 0 0 16px rgba(200,210,230,0.85), 0 0 36px rgba(200,210,230,0.38); }
+}
+.metal-badge-pulse {
+  animation: metal-badge-pulse 2.5s ease-in-out infinite;
+}
+
 /* 紙吹雪 */
 @keyframes confettiFall {
   0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }

@@ -97,7 +97,8 @@ export default function CountdownTimer({ deadline, onExpired, onRefetch }: Count
       {/* カウントダウン（メイン） */}
       <div className="flex items-center gap-3 sm:gap-4">
         {/* 残り投票時間ラベル */}
-        <span className={`text-xs font-semibold tracking-widest whitespace-nowrap ${isUrgent ? "text-red-400 animate-pulse" : "text-cyan-400/70"}`}>
+        <span className={`text-xs font-semibold tracking-widest whitespace-nowrap ${isUrgent ? "text-red-400 animate-pulse" : ""}`}
+          style={isUrgent ? {} : { color: "rgba(160,170,190,0.75)" }}>
           残り投票時間
         </span>
         {/* 数字 */}
@@ -118,11 +119,11 @@ export default function CountdownTimer({ deadline, onExpired, onRefetch }: Count
 }
 
 function TimeUnit({ value, label, urgent }: { value: string; label: string; urgent: boolean }) {
-  const litColor   = urgent ? "#f87171" : "#67e8f9";   // 点灯セグメント色
-  const dimColor   = urgent ? "rgba(248,113,113,0.12)" : "rgba(103,232,249,0.10)"; // 消灯セグメント色
-  const glowColor  = urgent ? "rgba(239,68,68,0.55)"  : "rgba(34,211,238,0.35)";
-  const bgColor    = urgent ? "rgba(69,10,10,0.7)"    : "rgba(8,47,73,0.65)";
-  const borderColor = urgent ? "rgba(239,68,68,0.5)"  : "rgba(34,211,238,0.25)";
+  const litColor   = urgent ? "#f87171" : "#d8e0ee";             // 点灯セグメント色
+  const dimColor   = urgent ? "rgba(248,113,113,0.12)" : "rgba(200,210,230,0.09)"; // 消灯セグメント色
+  const glowColor  = urgent ? "rgba(239,68,68,0.55)"  : "rgba(180,190,215,0.40)";
+  const bgColor    = urgent ? "rgba(69,10,10,0.7)"    : "rgba(10,11,16,0.80)";
+  const borderColor = urgent ? "rgba(239,68,68,0.5)"  : "rgba(160,170,195,0.22)";
 
   return (
     <div className="flex flex-col items-center">
