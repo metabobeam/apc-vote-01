@@ -78,7 +78,7 @@ export default function ReviewAnnouncePage() {
   const [data, setData] = useState<PageData | null>(null);
   const [loading, setLoading] = useState(true);
   const [awards, setAwards] = useState<Award[]>([]);
-  const [phase, setPhase] = useState<Phase>("standby");
+  const [phase, setPhase] = useState<Phase>("revealing");
   const [revealedCount, setRevealedCount] = useState(0);
   const [animating, setAnimating] = useState(false);
   const [flipIdx, setFlipIdx] = useState<number | null>(null);
@@ -121,7 +121,11 @@ export default function ReviewAnnouncePage() {
         const winner = sorted[0];
         return {
           criterionIdx: ci,
-          awardName: json.criteriaLabels?.[ci] ?? `項目${ci + 1}`,
+          awardName: (() => {
+            const label = json.criteriaLabels?.[ci] ?? `項目${ci + 1}`;
+            const m = label.match(/【(.+?)】/);
+            return m ? `【${m[1]}】` : label;
+          })(),
           description: DEFAULT_CRITERIA_LABELS[ci],
           winnerName: winner?.productNumber ?? "—",
           score: winner?.c[ci] ?? 0,

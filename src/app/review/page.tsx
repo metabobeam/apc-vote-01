@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { ReviewTarget, DEFAULT_CRITERIA_LABELS } from "@/lib/types";
 
 interface ScoreInput {
@@ -46,7 +47,10 @@ function ScoreSelector({
   );
 }
 
-export default function ReviewPage() {
+function ReviewPageInner() {
+  const searchParams = useSearchParams();
+  const judgeParam = searchParams.get("judge");
+
   const [data, setData] = useState<PageData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -70,6 +74,17 @@ export default function ReviewPage() {
       if (!res.ok) throw new Error();
       const json = (await res.json()) as PageData;
       setData(json);
+      // URLパラメータで審査員が指定されていれば自動選択
+      if (judgeParam && json.judges.includes(judgeParam)) {
+        const saved = json.judgeScores[judgeParam] ?? {};
+        const initial: ScoreMap = {};
+        for (const t of json.targets) {
+          initial[t.id] = saved[t.id] ? { ...saved[t.id] } : { criterion1: 0, criterion2: 0, criterion3: 0 };
+        }
+        setScores(initial);
+        setSavedTargets(new Set(Object.keys(saved)));
+        setSelectedJudge(judgeParam);
+      }
       // 審査員選択中なら、サーバー上のスコアで未入力分のみ補完
       setSelectedJudge((currentJudge) => {
         if (currentJudge) {
@@ -499,5 +514,13 @@ export default function ReviewPage() {
         </div>
       )}
     </main>
+  );
+}
+
+export default function ReviewPage() {
+  return (
+    <Suspense fallback={<main className="min-h-screen bg-gray-50 flex items-center justify-center"><p className="text-gray-500">読み込み中...</p></main>}>
+      <ReviewPageInner />
+    </Suspense>
   );
 }

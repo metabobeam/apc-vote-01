@@ -147,11 +147,11 @@ function DonutChart({
 
 // ── グループカード ───────────────────────────────────────────────────────────
 function GroupCard({ stat }: { stat: GroupStat }) {
-  const pct   = stat.total > 0 ? stat.voted / stat.total : null;
+  const pct   = stat.total > 0 ? Math.min(stat.voted / stat.total, 1) : null;
   const state: "normal" | "urgent" | "complete" =
     pct === null ? "normal" : pct >= 1 ? "complete" : pct < 0.5 ? "urgent" : "normal";
   const barColor = state === "complete" ? M.green : state === "urgent" ? M.red : M.accent;
-  const barPct   = pct !== null ? Math.round(pct * 100) : null;
+  const barPct   = pct !== null ? Math.min(Math.round(pct * 100), 100) : null;
 
   return (
     <div style={{
@@ -360,7 +360,7 @@ export default function DashboardPage() {
         hour: "2-digit", minute: "2-digit", timeZone: "Asia/Tokyo",
       })
     : "";
-  const overallPct = data?.overall.total ? Math.round((data.overall.voted / data.overall.total) * 100) : null;
+  const overallPct = data?.overall.total ? Math.min(Math.round((data.overall.voted / data.overall.total) * 100), 100) : null;
   const overallState: "normal" | "urgent" | "complete" =
     overallPct === null ? "normal" : overallPct >= 100 ? "complete" : overallPct < 50 ? "urgent" : "normal";
 
@@ -578,7 +578,7 @@ export default function DashboardPage() {
                     </div>
                     <div style={{ height: "5px", background: "rgba(30,38,58,0.9)", borderRadius: "3px", overflow: "hidden" }}>
                       <div style={{
-                        width: `${overallPct ?? 0}%`, height: "100%",
+                        width: `${Math.min(overallPct ?? 0, 100)}%`, height: "100%",
                         background: `linear-gradient(90deg, ${overallState === "complete" ? M.green : overallState === "urgent" ? M.red : M.accent}, ${overallState === "complete" ? "#6ee7b7" : overallState === "urgent" ? "#fca5a5" : "#93c5fd"})`,
                         borderRadius: "3px", transition: "width 0.8s ease",
                         boxShadow: overallState === "complete" ? M.greenGlow : overallState === "urgent" ? M.redGlow : M.accentGlow,

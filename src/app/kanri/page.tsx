@@ -1230,6 +1230,30 @@ export default function AdminPage() {
               ※ 審査員の追加・削除は即座に保存されます
             </p>
 
+            {/* 審査員別 URL */}
+            {judges.length > 0 && (
+              <div className="mt-2 mb-4">
+                <p className="text-xs font-semibold text-gray-500 mb-2">📋 審査員別 審査URL（クリックでコピー）</p>
+                <div className="flex flex-col gap-1.5">
+                  {judges.map((name) => {
+                    const url = `${typeof window !== "undefined" ? window.location.origin : ""}/review?judge=${encodeURIComponent(name)}`;
+                    return (
+                      <button
+                        key={name}
+                        type="button"
+                        onClick={() => { navigator.clipboard.writeText(url); alert(`コピーしました:\n${url}`); }}
+                        className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-indigo-100 bg-indigo-50 hover:bg-indigo-100 transition-colors text-left"
+                      >
+                        <span className="text-xs font-bold text-indigo-700 shrink-0">{name}</span>
+                        <span className="text-xs text-indigo-400 truncate">/review?judge={encodeURIComponent(name)}</span>
+                        <span className="text-xs text-indigo-400 shrink-0">📋</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* 投票状況 */}
             {judgeData && judgeData.judgeVotes.length > 0 && (
               <div className="border-t border-gray-100 pt-4 mt-2">
