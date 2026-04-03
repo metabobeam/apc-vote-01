@@ -23,10 +23,15 @@ const SOUNDS: SoundItem[] = [
   { id: "undokai",        label: "舵取り楫取",           src: "/sp-undokai.mp4",                emoji: "🎪", loop: true },
 ];
 
+const FADE_DURATION = 3000; // ms
+const FADE_STEP     = 50;   // ms ごとに更新
+
 export default function SoundPalette() {
   const [open, setOpen] = useState(false);
   const [playing, setPlaying] = useState<Set<string>>(new Set());
-  const audioRefs = useRef<Map<string, HTMLAudioElement>>(new Map());
+  const [fading, setFading] = useState(false);
+  const audioRefs   = useRef<Map<string, HTMLAudioElement>>(new Map());
+  const fadeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // マウント時に全音源をプリロード
   useEffect(() => {
@@ -40,11 +45,14 @@ export default function SoundPalette() {
       audioRefs.current.set(s.id, audio);
     }
     return () => {
+      if (fadeTimerRef.current) clearInterval(fadeTimerRef.current);
       audioRefs.current.forEach((a) => { a.pause(); a.src = ""; });
     };
   }, []);
 
   const handlePlay = (id: string) => {
+    // フェード中は個別操作を無視しない（フェードをキャンセルしてから操作）
+    if (fading) cancelFade();
     const audio = audioRefs.current.get(id);
     if (!audio) return;
     if (playing.has(id)) {
@@ -52,6 +60,7 @@ export default function SoundPalette() {
       audio.currentTime = 0;
       setPlaying((prev) => { const next = new Set(prev); next.delete(id); return next; });
     } else {
+      audio.volume = 1;
       audio.currentTime = 0;
       audio.play();
       setPlaying((prev) => new Set(prev).add(id));
@@ -59,8 +68,39 @@ export default function SoundPalette() {
   };
 
   const stopAll = () => {
-    audioRefs.current.forEach((a) => { a.pause(); a.currentTime = 0; });
+    cancelFade();
+    audioRefs.current.forEach((a) => { a.pause(); a.currentTime = 0; a.volume = 1; });
     setPlaying(new Set());
+  };
+
+  const cancelFade = () => {
+    if (fadeTimerRef.current) { clearInterval(fadeTimerRef.current); fadeTimerRef.current = null; }
+    // ボリュームを元に戻す
+    audioRefs.current.forEach((a) => { a.volume = 1; });
+    setFading(false);
+  };
+
+  const fadeOut = () => {
+    if (fading) { cancelFade(); return; }   // 再度押したらキャンセル
+    if (playing.size === 0) return;
+
+    setFading(true);
+    const steps = FADE_DURATION / FADE_STEP;
+    let step = 0;
+
+    fadeTimerRef.current = setInterval(() => {
+      step++;
+      const vol = Math.max(0, 1 - step / steps);
+      audioRefs.current.forEach((a) => { if (!a.paused) a.volume = vol; });
+
+      if (step >= steps) {
+        clearInterval(fadeTimerRef.current!);
+        fadeTimerRef.current = null;
+        audioRefs.current.forEach((a) => { a.pause(); a.currentTime = 0; a.volume = 1; });
+        setPlaying(new Set());
+        setFading(false);
+      }
+    }, FADE_STEP);
   };
 
   return (
@@ -91,15 +131,44 @@ export default function SoundPalette() {
       >
         <div style={{ width: "220px", padding: "12px 10px" }}>
           {/* ヘッダー */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px", paddingBottom: "8px", borderBottom: "1px solid rgba(160,170,190,0.15)" }}>
+          <div style={{ marginBottom: "10px", paddingBottom: "8px", borderBottom: "1px solid rgba(160,170,190,0.15)" }}>
             <span style={{ color: "#94a3b8", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em" }}>🎵 SOUND PAD</span>
             {playing.size > 0 && (
-              <button
-                onClick={stopAll}
-                style={{ fontSize: "10px", color: "#f87171", background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: "6px", padding: "2px 8px", cursor: "pointer" }}
-              >
-                ■ 全停止
-              </button>
+              <div style={{ display: "flex", gap: "5px", marginTop: "7px" }}>
+                {/* フェードアウト */}
+                <button
+                  onClick={fadeOut}
+                  style={{
+                    flex: 1,
+                    fontSize: "10px",
+                    color: fading ? "#fbbf24" : "#a78bfa",
+                    background: fading ? "rgba(251,191,36,0.12)" : "rgba(139,92,246,0.12)",
+                    border: fading ? "1px solid rgba(251,191,36,0.4)" : "1px solid rgba(139,92,246,0.35)",
+                    borderRadius: "6px",
+                    padding: "3px 6px",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  {fading ? "↩ キャンセル" : "〜 FadeOut"}
+                </button>
+                {/* 全停止 */}
+                <button
+                  onClick={stopAll}
+                  style={{
+                    flex: 1,
+                    fontSize: "10px",
+                    color: "#f87171",
+                    background: "rgba(239,68,68,0.12)",
+                    border: "1px solid rgba(239,68,68,0.3)",
+                    borderRadius: "6px",
+                    padding: "3px 6px",
+                    cursor: "pointer",
+                  }}
+                >
+                  ■ 全停止
+                </button>
+              </div>
             )}
           </div>
 
@@ -146,7 +215,9 @@ export default function SoundPalette() {
                     {s.label}
                   </span>
                   {isPlaying && (
-                    <span style={{ fontSize: "9px", color: "#6bcab7", flexShrink: 0 }}>▶</span>
+                    <span style={{ fontSize: "9px", color: fading ? "#fbbf24" : "#6bcab7", flexShrink: 0 }}>
+                      {fading ? "〜" : "▶"}
+                    </span>
                   )}
                 </button>
               );
