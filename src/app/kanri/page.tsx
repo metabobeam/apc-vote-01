@@ -815,11 +815,11 @@ export default function AdminPage() {
                     <div className="w-5 h-5 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
                   </div>
                 )}
-                <div className="mt-4 pt-3 border-t border-gray-100">
+                <div className="mt-4 pt-3 border-t border-gray-100 flex justify-end">
                   <button
                     type="button"
                     onClick={() => router.push("/announce")}
-                    className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-sm py-3 rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
+                    className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-sm py-2.5 px-4 rounded-xl transition-all shadow-md flex items-center gap-2"
                   >
                     🎬 社員投票 結果発表へ
                   </button>
