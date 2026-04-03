@@ -712,13 +712,15 @@ export default function AdminPage() {
 
               <div className="border-t border-gray-200 pt-3">
                 {!resetConfirm ? (
-                  <button
-                    type="button"
-                    onClick={() => setResetConfirm(true)}
-                    className="w-full bg-white hover:bg-red-50 border border-gray-200 hover:border-red-300 text-gray-400 hover:text-red-500 font-medium py-3 rounded-xl transition-all text-sm"
-                  >
-                    投票データをリセット
-                  </button>
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setResetConfirm(true)}
+                      className="bg-white hover:bg-red-50 border border-gray-200 hover:border-red-300 text-gray-400 hover:text-red-500 font-medium py-2.5 px-4 rounded-xl transition-all text-sm"
+                    >
+                      投票データをリセット
+                    </button>
+                  </div>
                 ) : (
                   <div className="bg-red-50 border border-red-200 rounded-xl p-4">
                     <p className="text-red-600 text-sm text-center mb-3 font-medium">
