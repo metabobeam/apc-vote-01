@@ -118,22 +118,56 @@ export default function CountdownTimer({ deadline, onExpired, onRefetch }: Count
 }
 
 function TimeUnit({ value, label, urgent }: { value: string; label: string; urgent: boolean }) {
+  const litColor   = urgent ? "#f87171" : "#67e8f9";   // 点灯セグメント色
+  const dimColor   = urgent ? "rgba(248,113,113,0.12)" : "rgba(103,232,249,0.10)"; // 消灯セグメント色
+  const glowColor  = urgent ? "rgba(239,68,68,0.55)"  : "rgba(34,211,238,0.35)";
+  const bgColor    = urgent ? "rgba(69,10,10,0.7)"    : "rgba(8,47,73,0.65)";
+  const borderColor = urgent ? "rgba(239,68,68,0.5)"  : "rgba(34,211,238,0.25)";
+
   return (
     <div className="flex flex-col items-center">
       <div
-        className={`
-          w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center
-          rounded-xl font-mono font-bold text-xl sm:text-2xl
-          border transition-all duration-300
-          ${urgent
-            ? "border-red-500 bg-red-950/50 text-red-400 shadow-[0_0_15px_rgba(239,68,68,0.4)] animate-pulse"
-            : "border-cyan-500/40 bg-cyan-950/20 text-cyan-300 shadow-[0_0_8px_rgba(34,211,238,0.15)]"
-          }
-        `}
+        style={{
+          background: bgColor,
+          border: `1px solid ${borderColor}`,
+          borderRadius: "10px",
+          padding: "6px 10px",
+          boxShadow: `0 0 14px ${glowColor}, inset 0 0 8px rgba(0,0,0,0.4)`,
+          position: "relative",
+          transition: "all 0.3s",
+        }}
       >
-        {value}
+        {/* 消灯セグメント（背景） */}
+        <span style={{
+          fontFamily: "'DSEG7Classic', monospace",
+          fontWeight: "bold",
+          fontSize: "clamp(28px, 6vw, 42px)",
+          color: dimColor,
+          letterSpacing: "0.05em",
+          display: "block",
+          lineHeight: 1,
+          userSelect: "none",
+        }}>
+          {value}
+        </span>
+        {/* 点灯セグメント（前景） */}
+        <span style={{
+          fontFamily: "'DSEG7Classic', monospace",
+          fontWeight: "bold",
+          fontSize: "clamp(28px, 6vw, 42px)",
+          color: litColor,
+          letterSpacing: "0.05em",
+          display: "block",
+          lineHeight: 1,
+          position: "absolute",
+          top: "6px",
+          left: "10px",
+          textShadow: `0 0 8px ${litColor}, 0 0 20px ${glowColor}`,
+        }}>
+          {value}
+        </span>
       </div>
-      <span className="text-xs text-slate-500 mt-1">{label}</span>
+      <span className="text-xs text-slate-500 mt-1.5">{label}</span>
     </div>
   );
 }
