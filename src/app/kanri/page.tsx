@@ -746,13 +746,15 @@ export default function AdminPage() {
               </div>
 
               {/* 投票内容確認 */}
-              <button
-                type="button"
-                onClick={() => router.push("/kanri/votes")}
-                className="w-full bg-rose-50 hover:bg-rose-100 border border-rose-200 hover:border-rose-300 text-rose-600 font-medium text-sm py-2.5 rounded-xl transition-all flex items-center justify-center gap-2"
-              >
-                <span>🗳️</span> 投票内容の確認・無効票削除
-              </button>
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => router.push("/kanri/votes")}
+                  className="bg-rose-50 hover:bg-rose-100 border border-rose-200 hover:border-rose-300 text-rose-600 font-medium text-sm py-2.5 px-4 rounded-xl transition-all flex items-center gap-2"
+                >
+                  <span>🗳️</span> 投票内容の確認・無効票削除
+                </button>
+              </div>
 
               {/* 社員投票 結果パネル */}
               <div className="bg-white border-2 border-emerald-100 rounded-2xl p-5 shadow-sm">
