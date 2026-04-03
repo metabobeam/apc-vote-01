@@ -1054,6 +1054,38 @@ export default function AdminPage() {
 
                 return (
                   <div className="mb-4 flex flex-col gap-4">
+                    <div className="flex justify-end mb-3">
+                      <button
+                        type="button"
+                        onClick={() => router.push("/review")}
+                        className="text-xs bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-700 font-medium px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+                      >
+                        📋 討議班審査ページへ →
+                      </button>
+                    </div>
+                    {/* 審査員別 URL */}
+                    {judges.length > 0 && (
+                      <div className="mb-2">
+                        <p className="text-xs font-semibold text-gray-500 mb-2">📋 審査員別 審査URL（クリックでコピー）</p>
+                        <div className="flex flex-col gap-1.5">
+                          {judges.map((name) => {
+                            const url = `${typeof window !== "undefined" ? window.location.origin : ""}/review?judge=${encodeURIComponent(name)}`;
+                            return (
+                              <button
+                                key={name}
+                                type="button"
+                                onClick={() => { navigator.clipboard.writeText(url); alert(`コピーしました:\n${url}`); }}
+                                className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-indigo-100 bg-indigo-50 hover:bg-indigo-100 transition-colors text-left"
+                              >
+                                <span className="text-xs font-bold text-indigo-700 shrink-0">{name}</span>
+                                <span className="text-xs text-indigo-400 truncate">/review?judge={encodeURIComponent(name)}</span>
+                                <span className="text-xs text-indigo-400 shrink-0">📋</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                     <p className="text-xs font-semibold text-gray-500">採点集計（項目別ランキング）</p>
                     {criteriaKeys.map((key, ki) => {
                       const label = reviewData.criteriaLabels?.[ki] || `項目${ki + 1}`;
@@ -1131,15 +1163,8 @@ export default function AdminPage() {
             </div>
           </div>
 
-          {/* 討議班審査ページ・表彰発表ページへのリンク */}
-          <div className="mt-3 flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => router.push("/review")}
-              className="text-sm bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-700 font-medium px-4 py-2.5 rounded-xl transition-colors flex items-center gap-2 shadow-sm"
-            >
-              📋 討議班審査ページへ →
-            </button>
+          {/* 討議班3賞発表ページへのリンク */}
+          <div className="mt-3 flex justify-end">
             <button
               type="button"
               onClick={() => router.push("/review/announce")}
@@ -1230,29 +1255,6 @@ export default function AdminPage() {
               ※ 審査員の追加・削除は即座に保存されます
             </p>
 
-            {/* 審査員別 URL */}
-            {judges.length > 0 && (
-              <div className="mt-2 mb-4">
-                <p className="text-xs font-semibold text-gray-500 mb-2">📋 審査員別 審査URL（クリックでコピー）</p>
-                <div className="flex flex-col gap-1.5">
-                  {judges.map((name) => {
-                    const url = `${typeof window !== "undefined" ? window.location.origin : ""}/review?judge=${encodeURIComponent(name)}`;
-                    return (
-                      <button
-                        key={name}
-                        type="button"
-                        onClick={() => { navigator.clipboard.writeText(url); alert(`コピーしました:\n${url}`); }}
-                        className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-indigo-100 bg-indigo-50 hover:bg-indigo-100 transition-colors text-left"
-                      >
-                        <span className="text-xs font-bold text-indigo-700 shrink-0">{name}</span>
-                        <span className="text-xs text-indigo-400 truncate">/review?judge={encodeURIComponent(name)}</span>
-                        <span className="text-xs text-indigo-400 shrink-0">📋</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
 
             {/* 投票状況 */}
             {judgeData && judgeData.judgeVotes.length > 0 && (
