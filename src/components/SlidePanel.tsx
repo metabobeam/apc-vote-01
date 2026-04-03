@@ -67,7 +67,7 @@ export default function SlidePanel() {
 
   const handleItemClick = async (item: SlideListItem) => {
     if (item.type === "link") {
-      window.open(item.url, "_blank", "noopener,noreferrer");
+      window.location.href = item.url!;
       return;
     }
     setOpen(false);
@@ -104,17 +104,17 @@ export default function SlidePanel() {
                   style={{
                     display: "flex", alignItems: "center", gap: "10px",
                     width: "100%", padding: "9px 14px",
-                    background: "rgba(20,23,32,0.75)",
-                    border: "1px solid rgba(200,215,240,0.15)",
+                    background: "rgba(14,17,26,0.25)",
+                    border: "1px solid rgba(200,215,240,0.12)",
                     borderRadius: "10px",
                     cursor: "pointer",
                     color: "#dce4f4", fontSize: "13px", fontWeight: 600,
                     textAlign: "left",
-                    backdropFilter: "blur(8px)",
+                    backdropFilter: "blur(10px)",
                     transition: "background 0.15s",
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(96,165,250,0.20)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(20,23,32,0.75)")}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(96,165,250,0.25)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(14,17,26,0.25)")}
                 >
                   <span style={{ fontSize: "16px", flexShrink: 0 }}>
                     {item.type === "image" ? "🖼️" : "🔗"}
