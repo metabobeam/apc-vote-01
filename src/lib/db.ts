@@ -33,6 +33,18 @@ function runMigrations(db: Database.Database) {
   if (!cols.find((c) => c.name === "group_name")) {
     db.exec("ALTER TABLE votes ADD COLUMN group_name TEXT NOT NULL DEFAULT ''");
   }
+
+  // criteriaLabels を最新の正式名称に強制上書き
+  const reviewRow = db.prepare("SELECT value FROM config WHERE key = 'review'").get() as { value: string } | undefined;
+  if (reviewRow) {
+    try {
+      const cfg = JSON.parse(reviewRow.value) as ReviewConfig;
+      cfg.criteriaLabels = [...DEFAULT_CRITERIA_LABELS];
+      db.prepare(
+        "INSERT INTO config (key, value) VALUES ('review', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
+      ).run(JSON.stringify(cfg));
+    } catch { /* ignore */ }
+  }
 }
 
 function initSchema(db: Database.Database) {
@@ -40,6 +52,15 @@ function initSchema(db: Database.Database) {
     CREATE TABLE IF NOT EXISTS config (
       key   TEXT PRIMARY KEY,
       value TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS slides (
+      id         TEXT PRIMARY KEY,
+      name       TEXT NOT NULL,
+      type       TEXT NOT NULL,
+      data       TEXT NOT NULL,
+      order_num  INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS votes (
@@ -147,31 +168,21 @@ export function dbHasEmployeeVoted(employeeNumber: string): boolean {
 }
 
 /**
- * トランザクション内で重複チェック → 投票保存を原子的に実行
- * 同時リクエストでも重複投票が入らない
+ * 投票保存（重複チェックなし）
  */
 export function dbSaveVote(vote: VoteRow): { ok: boolean; error?: string } {
   const db = getDb();
 
-  const saveTransaction = db.transaction(() => {
-    const existing = db
-      .prepare("SELECT id FROM votes WHERE employee_number = ? LIMIT 1")
-      .get(vote.employeeNumber);
-    if (existing) return { ok: false, error: "この社員番号はすでに投票済みです" };
-
-    db.prepare(
-      "INSERT INTO votes (id, employee_number, group_name, selected_ids, timestamp) VALUES (?, ?, ?, ?, ?)"
-    ).run(
-      vote.id,
-      vote.employeeNumber,
-      vote.groupName ?? "",
-      JSON.stringify(vote.selectedProductIds),
-      vote.timestamp
-    );
-    return { ok: true };
-  });
-
-  return saveTransaction() as { ok: boolean; error?: string };
+  db.prepare(
+    "INSERT INTO votes (id, employee_number, group_name, selected_ids, timestamp) VALUES (?, ?, ?, ?, ?)"
+  ).run(
+    vote.id,
+    vote.employeeNumber,
+    vote.groupName ?? "",
+    JSON.stringify(vote.selectedProductIds),
+    vote.timestamp
+  );
+  return { ok: true };
 }
 
 export function dbDeleteVote(id: string): boolean {
@@ -318,4 +329,54 @@ export function dbClearReviewScores(): void {
 export function dbClearReviewByJudge(judgeName: string): void {
   const db = getDb();
   db.prepare("DELETE FROM review_scores WHERE judge_name = ?").run(judgeName);
+}
+
+// ─── Slides ──────────────────────────────────────────────────────────────────
+
+export interface SlideItem {
+  id: string;
+  name: string;
+  type: "image" | "link";
+  data: string;   // type=image: base64 JPEG, type=link: URL
+  order: number;
+  createdAt: string;
+}
+
+export function dbGetSlides(): SlideItem[] {
+  const db = getDb();
+  const rows = db.prepare(
+    "SELECT id, name, type, data, order_num, created_at FROM slides ORDER BY order_num ASC, created_at ASC"
+  ).all() as { id: string; name: string; type: string; data: string; order_num: number; created_at: string }[];
+  return rows.map((r) => ({
+    id: r.id, name: r.name, type: r.type as "image" | "link",
+    data: r.data, order: r.order_num, createdAt: r.created_at,
+  }));
+}
+
+export function dbGetSlideById(id: string): SlideItem | null {
+  const db = getDb();
+  const r = db.prepare("SELECT * FROM slides WHERE id = ?").get(id) as
+    { id: string; name: string; type: string; data: string; order_num: number; created_at: string } | undefined;
+  if (!r) return null;
+  return { id: r.id, name: r.name, type: r.type as "image" | "link", data: r.data, order: r.order_num, createdAt: r.created_at };
+}
+
+export function dbSaveSlide(item: SlideItem): void {
+  const db = getDb();
+  db.prepare(
+    "INSERT INTO slides (id, name, type, data, order_num, created_at) VALUES (?, ?, ?, ?, ?, ?)"
+  ).run(item.id, item.name, item.type, item.data, item.order, item.createdAt);
+}
+
+export function dbUpdateSlide(id: string, fields: Partial<Pick<SlideItem, "name" | "type" | "data" | "order">>): void {
+  const db = getDb();
+  if (fields.name !== undefined) db.prepare("UPDATE slides SET name = ? WHERE id = ?").run(fields.name, id);
+  if (fields.type !== undefined) db.prepare("UPDATE slides SET type = ? WHERE id = ?").run(fields.type, id);
+  if (fields.data !== undefined) db.prepare("UPDATE slides SET data = ? WHERE id = ?").run(fields.data, id);
+  if (fields.order !== undefined) db.prepare("UPDATE slides SET order_num = ? WHERE id = ?").run(fields.order, id);
+}
+
+export function dbDeleteSlide(id: string): boolean {
+  const db = getDb();
+  return db.prepare("DELETE FROM slides WHERE id = ?").run(id).changes > 0;
 }

@@ -577,21 +577,30 @@ export default function AdminPage() {
                 </div>
               </div>
               {/* 基本設定内 保存ボタン */}
-              <div className="flex items-center justify-end gap-3 mt-5 pt-4 border-t border-gray-100">
-                {saveMsg && (
-                  <p className={`text-xs font-medium ${saveMsg.startsWith("✓") ? "text-green-600" : "text-red-500"}`}>
-                    {saveMsg}
-                  </p>
-                )}
+              <div className="flex items-center justify-between gap-3 mt-5 pt-4 border-t border-gray-100">
                 <button
-                  type="submit"
-                  disabled={saving}
-                  className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white font-bold text-sm px-6 py-2 rounded-xl transition-colors shadow-sm flex items-center gap-2"
+                  type="button"
+                  onClick={() => router.push("/kanri/slides")}
+                  className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm py-2 px-4 rounded-xl transition-all shadow-md flex items-center gap-2"
                 >
-                  {saving ? (
-                    <><div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />保存中...</>
-                  ) : "設定を保存"}
+                  📋 スライド管理
                 </button>
+                <div className="flex items-center gap-3">
+                  {saveMsg && (
+                    <p className={`text-xs font-medium ${saveMsg.startsWith("✓") ? "text-green-600" : "text-red-500"}`}>
+                      {saveMsg}
+                    </p>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white font-bold text-sm px-6 py-2 rounded-xl transition-colors shadow-sm flex items-center gap-2"
+                  >
+                    {saving ? (
+                      <><div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />保存中...</>
+                    ) : "設定を保存"}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -869,7 +878,7 @@ export default function AdminPage() {
                     <div className="w-5 h-5 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
                   </div>
                 )}
-                <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
+                <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={() => router.push("/kanri/dashboard")}

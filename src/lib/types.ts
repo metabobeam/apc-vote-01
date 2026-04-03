@@ -76,9 +76,9 @@ export interface ReviewConfig {
 }
 
 export const DEFAULT_CRITERIA_LABELS: [string, string, string] = [
-  "創業の精神・理念・価値基準・行動規範との結びつけ",
+  "【DNA継承賞】 創業の精神・理念・価値基準・行動規範との結びつけ",
   "表面的な結論で終わらず、考えを掘り下げた痕跡",
-  "回答の中に、新しい視点・立場・考え方が併記されているか",
+  "【森を見て木も見てるで賞】 回答の中に、新しい視点・立場・考え方が併記されているか",
 ];
 
 export const DEFAULT_REVIEW_CONFIG: ReviewConfig = {
