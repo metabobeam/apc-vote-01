@@ -30,7 +30,7 @@ export default function VotePage() {
   const [myVote, setMyVote] = useState<VoteCookieData | null>(null);
   const [showMyVote, setShowMyVote] = useState(false);
 
-  useEffect(() => {
+  const fetchConfig = useCallback(() => {
     fetch("/api/config")
       .then((r) => r.json())
       .then((data: PublicConfig) => {
@@ -39,12 +39,16 @@ export default function VotePage() {
           setIsExpired(true);
         }
       });
+  }, []);
+
+  useEffect(() => {
+    fetchConfig();
     const saved = getVoteCookie();
     if (saved) {
       setMyVote(saved);
       setShowMyVote(true);
     }
-  }, []);
+  }, [fetchConfig]);
 
   const handleExpired = useCallback(() => {
     setIsExpired(true);
@@ -260,7 +264,7 @@ export default function VotePage() {
 
         {/* ── カウントダウン ── */}
         <div className="mb-6">
-          <CountdownTimer deadline={config.deadline} onExpired={handleExpired} />
+          <CountdownTimer deadline={config.deadline} onExpired={handleExpired} onRefetch={fetchConfig} />
         </div>
 
         {/* ── 投票記録バナー ── */}

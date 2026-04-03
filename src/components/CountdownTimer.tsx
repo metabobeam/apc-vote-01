@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 interface TimeLeft {
   days: number;
@@ -12,11 +12,21 @@ interface TimeLeft {
 interface CountdownTimerProps {
   deadline: string;
   onExpired?: () => void;
+  onRefetch?: () => void;  // 60・10・1秒時にサーバー再取得を要求
 }
 
-export default function CountdownTimer({ deadline, onExpired }: CountdownTimerProps) {
+// 再取得をトリガーする残り秒数
+const REFETCH_THRESHOLDS = [60, 10, 1];
+
+export default function CountdownTimer({ deadline, onExpired, onRefetch }: CountdownTimerProps) {
   const [timeLeft, setTimeLeft] = useState<TimeLeft | null>(null);
   const [isExpired, setIsExpired] = useState(false);
+  const triggeredRef = React.useRef<Set<number>>(new Set());
+
+  useEffect(() => {
+    // deadlineが変わったらトリガー済みセットをリセット
+    triggeredRef.current = new Set();
+  }, [deadline]);
 
   useEffect(() => {
     const calculate = () => {
@@ -31,6 +41,16 @@ export default function CountdownTimer({ deadline, onExpired }: CountdownTimerPr
         return;
       }
 
+      const totalSeconds = Math.floor(diff / 1000);
+
+      // 60・10・1秒のタイミングでサーバー再取得
+      for (const threshold of REFETCH_THRESHOLDS) {
+        if (totalSeconds <= threshold && !triggeredRef.current.has(threshold)) {
+          triggeredRef.current.add(threshold);
+          onRefetch?.();
+        }
+      }
+
       setTimeLeft({
         days: Math.floor(diff / (1000 * 60 * 60 * 24)),
         hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
@@ -42,7 +62,7 @@ export default function CountdownTimer({ deadline, onExpired }: CountdownTimerPr
     calculate();
     const timer = setInterval(calculate, 1000);
     return () => clearInterval(timer);
-  }, [deadline, onExpired]);
+  }, [deadline, onExpired, onRefetch]);
 
   // 締め切り時刻を "YYYY/MM/DD HH:MM" 形式で表示
   const deadlineLabel = (() => {
