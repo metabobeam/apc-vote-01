@@ -693,7 +693,7 @@ export default function DashboardPage() {
                             {item.emp}
                           </span>
                           {/* 時刻 */}
-                          <span style={{ fontSize: "7px", color: "rgba(160,175,210,0.22)", flexShrink: 0 }}>
+                          <span style={{ fontSize: "7px", color: M.red, flexShrink: 0 }}>
                             {item.time}
                           </span>
                         </div>
