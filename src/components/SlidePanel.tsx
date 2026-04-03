@@ -89,34 +89,34 @@ export default function SlidePanel() {
             marginBottom: "8px",
             background: "transparent",
             overflow: "hidden",
-            minWidth: "220px",
-            maxWidth: "300px",
+            minWidth: "176px",
+            maxWidth: "240px",
             maxHeight: "70vh",
             overflowY: "auto",
             animation: "slidePanelIn 0.2s ease-out",
           }}>
             {/* アイテム一覧 */}
-            <div style={{ padding: "4px 0", display: "flex", flexDirection: "column", gap: "4px" }}>
+            <div style={{ padding: "3px 0", display: "flex", flexDirection: "column", gap: "3px" }}>
               {slides.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => handleItemClick(item)}
                   style={{
-                    display: "flex", alignItems: "center", gap: "10px",
-                    width: "100%", padding: "9px 14px",
-                    background: "rgba(14,17,26,0.25)",
-                    border: "1px solid rgba(200,215,240,0.12)",
-                    borderRadius: "10px",
+                    display: "flex", alignItems: "center", gap: "8px",
+                    width: "100%", padding: "7px 11px",
+                    background: "rgba(20,24,38,0.82)",
+                    border: "1px solid rgba(200,215,240,0.15)",
+                    borderRadius: "8px",
                     cursor: "pointer",
-                    color: "#dce4f4", fontSize: "13px", fontWeight: 600,
+                    color: "#ffffff",
+                    fontSize: "10px", fontWeight: 700,
                     textAlign: "left",
-                    backdropFilter: "blur(10px)",
                     transition: "background 0.15s",
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(96,165,250,0.25)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(14,17,26,0.25)")}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(96,165,250,0.35)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(20,24,38,0.82)")}
                 >
-                  <span style={{ fontSize: "16px", flexShrink: 0 }}>
+                  <span style={{ fontSize: "13px", flexShrink: 0 }}>
                     {item.type === "image" ? "🖼️" : "🔗"}
                   </span>
                   <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
