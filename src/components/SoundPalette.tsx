@@ -20,7 +20,7 @@ const SOUNDS: SoundItem[] = [
   { id: "among",          label: "Among Terraced Houses", src: "/sp-among-terraced-houses.mp3", emoji: "🎵", loop: true },
   { id: "fight",          label: "Fight Song",          src: "/sp-fight-song.mp3",             emoji: "🎤", loop: true },
   { id: "champions",      label: "We Are The Champions",src: "/sp-we-are-the-champions.mp3",   emoji: "🏆", loop: true },
-  { id: "undokai",        label: "GKH 運動会用",        src: "/sp-undokai.mp4",                emoji: "🎪", loop: true },
+  { id: "undokai",        label: "舵取り楫取",           src: "/sp-undokai.mp4",                emoji: "🎪", loop: true },
 ];
 
 export default function SoundPalette() {
