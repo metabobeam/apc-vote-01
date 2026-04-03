@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ProductOption, VoteStats } from "@/lib/types";
 import { v4 as uuidv4 } from "uuid";
 import { getResultsAuth, setResultsAuth, clearResultsAuth, saveAdminPass, getAdminPass } from "@/lib/cookies";
+import SoundPalette from "@/components/SoundPalette";
 
 interface Config {
   title: string;
@@ -1378,6 +1379,10 @@ export default function AdminPage() {
           </>
         )}
       </div>
+
+      {/* 浮遊型サウンドパレット */}
+      <SoundPalette />
+
     </main>
   );
 }
