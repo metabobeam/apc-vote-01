@@ -509,7 +509,7 @@ export default function DashboardPage() {
                   ▌ 全体の投票状況
                 </p>
                 <div style={{ display: "flex", justifyContent: "center", marginBottom: "20px", position: "relative" }}>
-                  <DonutChart voted={data.overall.voted} total={data.overall.total} size={148} state={overallState} />
+                  <DonutChart voted={data.overall.voted} total={data.overall.total} size={234} state={overallState} />
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", position: "relative" }}>
                   {/* 投票済み */}
