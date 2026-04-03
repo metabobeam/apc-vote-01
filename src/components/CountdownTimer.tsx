@@ -96,18 +96,10 @@ export default function CountdownTimer({ deadline, onExpired, onRefetch }: Count
     <div className="flex flex-col items-center gap-3">
       {/* カウントダウン（メイン） */}
       <div className="flex items-center gap-3 sm:gap-4">
-        {/* 投票時間残りラベル */}
-        <div className="flex flex-col items-center gap-1">
-          <span className={`text-xs font-semibold tracking-widest whitespace-nowrap ${isUrgent ? "text-red-400 animate-pulse" : "text-cyan-400/70"}`}>
-            投票
-          </span>
-          <span className={`text-xs font-semibold tracking-widest whitespace-nowrap ${isUrgent ? "text-red-400 animate-pulse" : "text-cyan-400/70"}`}>
-            時間
-          </span>
-          <span className={`text-xs font-semibold tracking-widest whitespace-nowrap ${isUrgent ? "text-red-400 animate-pulse" : "text-cyan-400/70"}`}>
-            残り
-          </span>
-        </div>
+        {/* 残り投票時間ラベル */}
+        <span className={`text-xs font-semibold tracking-widest whitespace-nowrap ${isUrgent ? "text-red-400 animate-pulse" : "text-cyan-400/70"}`}>
+          残り投票時間
+        </span>
         {/* 数字 */}
         <div className="flex gap-2 sm:gap-3">
           {!isUrgent && (
