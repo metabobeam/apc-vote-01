@@ -15,6 +15,7 @@ interface Config {
   maxSelections: number;
   judges: string[];
   groups: string[];
+  groupParticipants?: Record<string, number>;
 }
 
 interface JudgeData {
@@ -74,6 +75,7 @@ export default function AdminPage() {
 
   const [groups, setGroups] = useState<string[]>([]);
   const [newGroupName, setNewGroupName] = useState("");
+  const [groupParticipants, setGroupParticipants] = useState<Record<string, number>>({});
 
   const [judges, setJudges] = useState<string[]>([]);
   const [newJudgeName, setNewJudgeName] = useState("");
@@ -112,6 +114,7 @@ export default function AdminPage() {
     setDeadline(local);
     setOptions(data.options.map((o) => ({ ...o })));
     setGroups(data.groups ?? []);
+    setGroupParticipants(data.groupParticipants ?? {});
     setJudges(data.judges ?? []);
     fetchJudgeData();
     fetchReviewData();
@@ -242,6 +245,17 @@ export default function AdminPage() {
       }
       return updated;
     }));
+  };
+
+  // 組ごとの参加人数を即時保存
+  const saveGroupParticipants = async (next: Record<string, number>) => {
+    try {
+      await fetch("/api/config", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password, groupParticipants: next }),
+      });
+    } catch { /* ignore */ }
   };
 
   // 組リストを即時保存
@@ -623,10 +637,27 @@ export default function AdminPage() {
                 </button>
               </div>
               {groups.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-col divide-y divide-gray-100 border border-gray-100 rounded-xl overflow-hidden">
                   {groups.map((name) => (
-                    <span key={name} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm border bg-orange-50 border-orange-200 text-orange-700">
-                      {name}
+                    <div key={name} className="flex items-center gap-3 px-3 py-2.5 bg-white hover:bg-orange-50/40 transition-colors">
+                      <span className="flex-1 text-sm text-orange-700 font-medium truncate">{name}</span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="text-xs text-gray-400">参加人数</span>
+                        <input
+                          type="number"
+                          min={0}
+                          value={groupParticipants[name] ?? ""}
+                          placeholder="0"
+                          onChange={(e) => {
+                            const v = e.target.value === "" ? 0 : parseInt(e.target.value, 10);
+                            const next = { ...groupParticipants, [name]: isNaN(v) ? 0 : v };
+                            setGroupParticipants(next);
+                            saveGroupParticipants(next);
+                          }}
+                          className="w-16 border border-gray-200 focus:border-orange-400 rounded-lg px-2 py-1 text-sm text-center text-gray-800 outline-none"
+                        />
+                        <span className="text-xs text-gray-400">人</span>
+                      </div>
                       <button
                         type="button"
                         onClick={() => {
@@ -634,15 +665,15 @@ export default function AdminPage() {
                           setGroups(next);
                           saveGroups(next);
                         }}
-                        className="text-orange-400 hover:text-red-500 ml-0.5 transition-colors"
+                        className="text-gray-300 hover:text-red-400 transition-colors text-sm ml-1"
                       >×</button>
-                    </span>
+                    </div>
                   ))}
                 </div>
               ) : (
                 <p className="text-gray-400 text-sm">組が登録されていません</p>
               )}
-              <p className="text-gray-400 text-xs mt-3">※ 組の追加・削除は即座に保存されます</p>
+              <p className="text-gray-400 text-xs mt-3">※ 組の追加・削除・参加人数は即座に保存されます</p>
             </div>
 
             {/* Options */}
@@ -838,7 +869,14 @@ export default function AdminPage() {
                     <div className="w-5 h-5 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
                   </div>
                 )}
-                <div className="mt-4 pt-3 border-t border-gray-100 flex justify-end">
+                <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => router.push("/kanri/dashboard")}
+                    className="bg-gradient-to-r from-sky-500 to-cyan-500 hover:from-sky-400 hover:to-cyan-400 text-white font-bold text-sm py-2.5 px-4 rounded-xl transition-all shadow-md flex items-center gap-2"
+                  >
+                    📊 投票 ダッシュボード
+                  </button>
                   <button
                     type="button"
                     onClick={() => router.push("/announce")}

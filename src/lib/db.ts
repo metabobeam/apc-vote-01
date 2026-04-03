@@ -99,6 +99,7 @@ export function dbGetConfig(): VoteConfig {
   if (config.maxSelections === undefined) config.maxSelections = 1;
   if (config.judges === undefined) config.judges = [];
   if (config.groups === undefined) config.groups = [];
+  if (config.groupParticipants === undefined) config.groupParticipants = {};
   return config;
 }
 

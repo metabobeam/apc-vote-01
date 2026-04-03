@@ -13,6 +13,7 @@ export interface VoteConfig {
   maxSelections: number; // 1, 2, or 3
   judges: string[]; // 審査員名リスト
   groups: string[]; // 組リスト
+  groupParticipants: Record<string, number>; // 組ごとの参加人数
 }
 
 export interface JudgeVoteRecord {
@@ -51,6 +52,12 @@ export interface VoteStats {
   maxSelections: number;
   results: VoteResult[];
   lastUpdated: string;
+}
+
+export interface DashboardStat {
+  group: string;
+  voted: number;
+  total: number;  // 参加人数（0=未設定）
 }
 
 // ─── 討議班審査（投票と独立） ─────────────────────────────────────────────
@@ -111,4 +118,5 @@ export const DEFAULT_CONFIG: VoteConfig = {
   maxSelections: 1,
   judges: [],
   groups: [],
+  groupParticipants: {},
 };
