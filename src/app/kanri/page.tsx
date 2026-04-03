@@ -1039,53 +1039,53 @@ export default function AdminPage() {
                 </div>
               )}
 
+              {/* 討議班審査ページボタン・審査員別URL（常に表示） */}
+              <div className="mb-2 flex flex-col gap-3">
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => router.push("/review")}
+                    className="text-xs bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-700 font-medium px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+                  >
+                    📋 討議班審査ページへ →
+                  </button>
+                </div>
+                {judges.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 mb-2">📋 審査員別 審査URL（クリックでコピー）</p>
+                    <div className="flex flex-col gap-1.5">
+                      {judges.map((name) => {
+                        const url = `${typeof window !== "undefined" ? window.location.origin : ""}/review?judge=${encodeURIComponent(name)}`;
+                        return (
+                          <button
+                            key={name}
+                            type="button"
+                            onClick={() => { navigator.clipboard.writeText(url); alert(`コピーしました:\n${url}`); }}
+                            className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-indigo-100 bg-indigo-50 hover:bg-indigo-100 transition-colors text-left"
+                          >
+                            <span className="text-xs font-bold text-indigo-700 shrink-0">{name}</span>
+                            <span className="text-xs text-indigo-400 truncate">/review?judge={encodeURIComponent(name)}</span>
+                            <span className="text-xs text-indigo-400 shrink-0">📋</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* 集計結果 */}
               {reviewData && reviewData.results.some((r) => r.reviewCount > 0) && (() => {
-                // 班ごとに項目別合計を計算
                 const withCriteria = reviewData.results.map((r) => ({
                   ...r,
                   c1: r.scores.reduce((s, x) => s + x.criterion1, 0),
                   c2: r.scores.reduce((s, x) => s + x.criterion2, 0),
                   c3: r.scores.reduce((s, x) => s + x.criterion3, 0),
                 }));
-
-                // 項目ごとに降順ソート（同点は合計で決める）
                 const criteriaKeys = ["c1", "c2", "c3"] as const;
 
                 return (
                   <div className="mb-4 flex flex-col gap-4">
-                    <div className="flex justify-end mb-3">
-                      <button
-                        type="button"
-                        onClick={() => router.push("/review")}
-                        className="text-xs bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-700 font-medium px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 shadow-sm"
-                      >
-                        📋 討議班審査ページへ →
-                      </button>
-                    </div>
-                    {/* 審査員別 URL */}
-                    {judges.length > 0 && (
-                      <div className="mb-2">
-                        <p className="text-xs font-semibold text-gray-500 mb-2">📋 審査員別 審査URL（クリックでコピー）</p>
-                        <div className="flex flex-col gap-1.5">
-                          {judges.map((name) => {
-                            const url = `${typeof window !== "undefined" ? window.location.origin : ""}/review?judge=${encodeURIComponent(name)}`;
-                            return (
-                              <button
-                                key={name}
-                                type="button"
-                                onClick={() => { navigator.clipboard.writeText(url); alert(`コピーしました:\n${url}`); }}
-                                className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-indigo-100 bg-indigo-50 hover:bg-indigo-100 transition-colors text-left"
-                              >
-                                <span className="text-xs font-bold text-indigo-700 shrink-0">{name}</span>
-                                <span className="text-xs text-indigo-400 truncate">/review?judge={encodeURIComponent(name)}</span>
-                                <span className="text-xs text-indigo-400 shrink-0">📋</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
                     <p className="text-xs font-semibold text-gray-500">採点集計（項目別ランキング）</p>
                     {criteriaKeys.map((key, ki) => {
                       const label = reviewData.criteriaLabels?.[ki] || `項目${ki + 1}`;
