@@ -46,6 +46,8 @@ export interface VoteResult {
 
 export interface VoteStats {
   totalVotes: number;
+  voterCount: number;                          // 投票人数（重複除外）
+  votersByGroup: { group: string; count: number }[]; // 班ごとの投票人数
   maxSelections: number;
   results: VoteResult[];
   lastUpdated: string;

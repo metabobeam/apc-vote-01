@@ -32,8 +32,23 @@ export async function GET() {
     }));
     results.sort((a, b) => b.count - a.count);
 
+    // 投票人数（有効投票者数）
+    const voterCount = validVotes.length;
+
+    // 班ごとの投票人数
+    const groupMap = new Map<string, number>();
+    for (const v of validVotes) {
+      const g = v.groupName?.trim() || "未設定";
+      groupMap.set(g, (groupMap.get(g) ?? 0) + 1);
+    }
+    const votersByGroup = Array.from(groupMap.entries())
+      .map(([group, count]) => ({ group, count }))
+      .sort((a, b) => a.group.localeCompare(b.group, "ja"));
+
     const stats: VoteStats = {
       totalVotes,
+      voterCount,
+      votersByGroup,
       maxSelections: config.maxSelections ?? 1,
       results,
       lastUpdated: new Date().toISOString(),

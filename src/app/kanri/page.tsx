@@ -779,9 +779,33 @@ export default function AdminPage() {
                   const topCount = Math.max(...sorted.map((r) => r.count), 0);
                   return (
                     <>
-                      <p className="text-xs text-gray-500 mb-3">
-                        総投票数：<span className="font-black text-emerald-600 text-sm">{voteStats.totalVotes}</span> 票
-                      </p>
+                      {/* 投票数・人数サマリ */}
+                      <div className="flex flex-wrap gap-x-5 gap-y-1 mb-3">
+                        <p className="text-xs text-gray-500">
+                          総投票数：<span className="font-black text-emerald-600 text-sm">{voteStats.totalVotes}</span> 票
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          投票人数：<span className="font-black text-blue-600 text-sm">{voteStats.voterCount}</span> 人
+                        </p>
+                      </div>
+
+                      {/* 班ごとの投票人数 */}
+                      {voteStats.votersByGroup && voteStats.votersByGroup.length > 0 && (
+                        <div className="mb-4 bg-gray-50 border border-gray-100 rounded-xl p-3">
+                          <p className="text-xs font-semibold text-gray-500 mb-2">班別 投票人数</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {voteStats.votersByGroup.map(({ group, count }) => (
+                              <span key={group}
+                                className="inline-flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-2.5 py-1 text-xs text-gray-700">
+                                <span className="font-medium">{group}</span>
+                                <span className="text-blue-600 font-black">{count}</span>
+                                <span className="text-gray-400">人</span>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                       <div className="flex flex-col gap-2.5">
                         {sorted.map((r) => {
                           const pct = maxCount > 0 ? (r.count / maxCount) * 100 : 0;
