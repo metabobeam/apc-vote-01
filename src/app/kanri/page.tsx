@@ -561,6 +561,23 @@ export default function AdminPage() {
                   </button>
                 </div>
               </div>
+              {/* 基本設定内 保存ボタン */}
+              <div className="flex items-center justify-end gap-3 mt-5 pt-4 border-t border-gray-100">
+                {saveMsg && (
+                  <p className={`text-xs font-medium ${saveMsg.startsWith("✓") ? "text-green-600" : "text-red-500"}`}>
+                    {saveMsg}
+                  </p>
+                )}
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white font-bold text-sm px-6 py-2 rounded-xl transition-colors shadow-sm flex items-center gap-2"
+                >
+                  {saving ? (
+                    <><div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />保存中...</>
+                  ) : "設定を保存"}
+                </button>
+              </div>
             </div>
 
             {/* ── 組管理 ── */}
