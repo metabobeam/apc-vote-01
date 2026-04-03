@@ -53,16 +53,26 @@ export default function SlidePanel() {
   // スライドが0件のときも非表示（管理者のみ気にする）
   if (slides.length === 0) return null;
 
+  const openModal = (src: string, name: string) => {
+    setModalImgSrc(src);
+    setModalName(name);
+    document.body.classList.add("slide-modal-open");
+  };
+
+  const closeModal = () => {
+    setModalImgSrc(null);
+    setModalName("");
+    document.body.classList.remove("slide-modal-open");
+  };
+
   const handleItemClick = async (item: SlideListItem) => {
     if (item.type === "link") {
       window.open(item.url, "_blank", "noopener,noreferrer");
       return;
     }
-    // 画像モーダル
-    setOpen(false);   // パネルを畳む
+    setOpen(false);
     setLoadingImg(true);
-    setModalName(item.name);
-    setModalImgSrc(`/api/slides/${item.id}`);
+    openModal(`/api/slides/${item.id}`, item.name);
     setLoadingImg(false);
   };
 
@@ -77,10 +87,7 @@ export default function SlidePanel() {
         {open && (
           <div style={{
             marginBottom: "8px",
-            background: "linear-gradient(155deg, #2a2f42 0%, #1e2232 50%, #141720 100%)",
-            border: "1px solid rgba(200,215,240,0.18)",
-            borderRadius: "16px",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.7), 0 0 0 1px rgba(160,180,230,0.08)",
+            background: "transparent",
             overflow: "hidden",
             minWidth: "220px",
             maxWidth: "300px",
@@ -88,22 +95,8 @@ export default function SlidePanel() {
             overflowY: "auto",
             animation: "slidePanelIn 0.2s ease-out",
           }}>
-            {/* ヘッダ */}
-            <div style={{
-              padding: "10px 14px 8px",
-              borderBottom: "1px solid rgba(200,215,240,0.10)",
-              display: "flex", justifyContent: "space-between", alignItems: "center",
-            }}>
-              <span style={{ fontSize: "11px", fontWeight: 700, color: "rgba(200,215,240,0.7)", letterSpacing: "0.1em" }}>
-                📋 スライド / リンク
-              </span>
-              <button onClick={() => setOpen(false)} style={{
-                background: "none", border: "none", color: "rgba(200,215,240,0.4)",
-                cursor: "pointer", fontSize: "14px", lineHeight: 1, padding: "0 2px",
-              }}>✕</button>
-            </div>
             {/* アイテム一覧 */}
-            <div style={{ padding: "6px 0" }}>
+            <div style={{ padding: "4px 0", display: "flex", flexDirection: "column", gap: "4px" }}>
               {slides.map((item) => (
                 <button
                   key={item.id}
@@ -111,13 +104,17 @@ export default function SlidePanel() {
                   style={{
                     display: "flex", alignItems: "center", gap: "10px",
                     width: "100%", padding: "9px 14px",
-                    background: "none", border: "none", cursor: "pointer",
+                    background: "rgba(20,23,32,0.75)",
+                    border: "1px solid rgba(200,215,240,0.15)",
+                    borderRadius: "10px",
+                    cursor: "pointer",
                     color: "#dce4f4", fontSize: "13px", fontWeight: 600,
                     textAlign: "left",
+                    backdropFilter: "blur(8px)",
                     transition: "background 0.15s",
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(96,165,250,0.10)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(96,165,250,0.20)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(20,23,32,0.75)")}
                 >
                   <span style={{ fontSize: "16px", flexShrink: 0 }}>
                     {item.type === "image" ? "🖼️" : "🔗"}
@@ -159,7 +156,7 @@ export default function SlidePanel() {
       {/* ── 画像モーダル ── */}
       {(modalImgSrc || loadingImg) && (
         <div
-          onClick={() => { setModalImgSrc(null); setModalName(""); }}
+          onClick={closeModal}
           style={{
             position: "fixed", inset: 0, zIndex: 2000,
             background: "#000",
@@ -169,26 +166,6 @@ export default function SlidePanel() {
             animation: "fadeIn 0.2s ease",
           }}
         >
-          {/* 閉じるボタン（右上） */}
-          <button
-            onClick={() => { setModalImgSrc(null); setModalName(""); }}
-            style={{
-              position: "absolute", top: "16px", right: "16px", zIndex: 1,
-              background: "rgba(0,0,0,0.6)", border: "1px solid rgba(255,255,255,0.2)",
-              borderRadius: "8px", color: "#fff", padding: "8px 16px",
-              cursor: "pointer", fontSize: "14px", fontWeight: 600,
-            }}
-          >
-            ✕ 閉じる
-          </button>
-          {/* 名前（左上） */}
-          {modalName && (
-            <div style={{ position: "absolute", top: "16px", left: "16px", zIndex: 1 }}>
-              <span style={{ color: "rgba(220,228,244,0.80)", fontSize: "14px", fontWeight: 600, background: "rgba(0,0,0,0.5)", padding: "6px 12px", borderRadius: "6px" }}>
-                {modalName}
-              </span>
-            </div>
-          )}
           {loadingImg ? (
             <div style={{ width: "40px", height: "40px", border: "3px solid rgba(255,255,255,0.15)", borderTop: "3px solid #60a5fa", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
           ) : (

@@ -30,8 +30,18 @@ export default function SoundPalette() {
   const [open, setOpen] = useState(false);
   const [playing, setPlaying] = useState<Set<string>>(new Set());
   const [fading, setFading] = useState(false);
+  const [slideModalOpen, setSlideModalOpen] = useState(false);
   const audioRefs   = useRef<Map<string, HTMLAudioElement>>(new Map());
   const fadeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // スライドモーダルが開いているときは非表示
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setSlideModalOpen(document.body.classList.contains("slide-modal-open"));
+    });
+    observer.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
 
   // マウント時に全音源をプリロード
   useEffect(() => {
@@ -102,6 +112,8 @@ export default function SoundPalette() {
       }
     }, FADE_STEP);
   };
+
+  if (slideModalOpen) return null;
 
   return (
     <div

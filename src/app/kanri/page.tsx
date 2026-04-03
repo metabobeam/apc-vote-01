@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import SoundPalette from "@/components/SoundPalette";
 import { ProductOption, VoteStats } from "@/lib/types";
 import { v4 as uuidv4 } from "uuid";
 import { getResultsAuth, setResultsAuth, clearResultsAuth, saveAdminPass, getAdminPass } from "@/lib/cookies";
-import SoundPalette from "@/components/SoundPalette";
 
 interface Config {
   title: string;
