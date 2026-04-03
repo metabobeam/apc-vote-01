@@ -793,14 +793,12 @@ export default function AdminPage() {
                       {voteStats.votersByGroup && voteStats.votersByGroup.length > 0 && (
                         <div className="mb-4 bg-gray-50 border border-gray-100 rounded-xl p-3">
                           <p className="text-xs font-semibold text-gray-500 mb-2">班別 投票人数</p>
-                          <div className="flex flex-wrap gap-1.5">
+                          <div className="flex flex-col divide-y divide-gray-100">
                             {voteStats.votersByGroup.map(({ group, count }) => (
-                              <span key={group}
-                                className="inline-flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-2.5 py-1 text-xs text-gray-700">
-                                <span className="font-medium">{group}</span>
-                                <span className="text-blue-600 font-black">{count}</span>
-                                <span className="text-gray-400">人</span>
-                              </span>
+                              <div key={group} className="flex items-center justify-between py-1.5 first:pt-0 last:pb-0">
+                                <span className="text-xs text-gray-600">{group}</span>
+                                <span className="text-xs font-black text-blue-600">{count} 人</span>
+                              </div>
                             ))}
                           </div>
                         </div>
