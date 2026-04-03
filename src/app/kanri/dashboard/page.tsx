@@ -55,6 +55,12 @@ const M = {
   topLine:     "linear-gradient(90deg, transparent 0%, rgba(160,180,230,0.6) 30%, rgba(200,220,255,0.9) 50%, rgba(160,180,230,0.6) 70%, transparent 100%)",
 };
 
+// ── 組名を ">" まで切り詰め ───────────────────────────────────────────────
+function trimGroupName(name: string): string {
+  const idx = name.search(/[>＞]/);
+  return idx === -1 ? name : name.slice(0, idx + 1);
+}
+
 // ── 残り時間計算 ──────────────────────────────────────────────────────────
 function calcTimeLeft(deadline: string) {
   const diff = new Date(deadline).getTime() - Date.now();
@@ -69,11 +75,11 @@ function calcTimeLeft(deadline: string) {
 
 // ── 7セグ ユニット（ダーク版） ────────────────────────────────────────────
 function DarkSevenSeg({ value, label, urgent }: { value: string; label: string; urgent: boolean }) {
-  const litColor  = urgent ? "rgba(248,113,113,0.55)"  : "rgba(160,175,215,0.22)";
-  const dimColor  = urgent ? "rgba(248,113,113,0.06)"  : "rgba(160,175,215,0.035)";
-  const glowColor = urgent ? "rgba(248,113,113,0.30)"  : "rgba(140,160,210,0.14)";
-  const bgColor   = urgent ? "rgba(40,8,8,0.55)"       : "rgba(8,10,16,0.55)";
-  const border    = urgent ? "rgba(248,113,113,0.25)"  : "rgba(140,160,210,0.10)";
+  const litColor  = urgent ? "rgba(255,130,130,0.92)"  : "rgba(175,210,255,0.80)";
+  const dimColor  = urgent ? "rgba(248,113,113,0.10)"  : "rgba(160,195,240,0.08)";
+  const glowColor = urgent ? "rgba(255,80,80,0.50)"    : "rgba(120,175,255,0.30)";
+  const bgColor   = urgent ? "rgba(40,8,8,0.70)"       : "rgba(8,12,22,0.70)";
+  const border    = urgent ? "rgba(255,100,100,0.40)"  : "rgba(120,165,240,0.22)";
   const fontSize  = "clamp(52px, 7vw, 72px)";
 
   return (
@@ -132,7 +138,7 @@ function DonutChart({
       <text x="50" y="47" textAnchor="middle" fill={arcColor} fontSize="16" fontWeight="bold">
         {labelPct}
       </text>
-      <text x="50" y="61" textAnchor="middle" fill="rgba(180,195,225,0.55)" fontSize="9">
+      <text x="50" y="61" textAnchor="middle" fill="rgba(255,255,255,0.90)" fontSize="9">
         {voted} / {total > 0 ? total : "?"}
       </text>
     </svg>
@@ -150,29 +156,30 @@ function GroupCard({ stat }: { stat: GroupStat }) {
   return (
     <div style={{
       background: M.cardBg, border: `1px solid ${M.cardBorder}`,
-      borderRadius: "14px", padding: "14px 10px 10px",
-      display: "flex", flexDirection: "column", alignItems: "center", gap: "6px",
+      borderRadius: "24px", padding: "24px 17px 17px",
+      display: "flex", flexDirection: "column", alignItems: "center", gap: "10px",
       boxShadow: M.cardGlow, minWidth: 0, position: "relative", overflow: "hidden",
     }}>
       {/* 上部ハイライトライン */}
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "1px", background: M.cardHighlight }} />
       {/* 斜めハイライト */}
       <div style={{ position: "absolute", top: 0, left: "-50%", right: "-50%", height: "40%", background: "linear-gradient(180deg, rgba(200,215,255,0.025) 0%, transparent 100%)", pointerEvents: "none" }} />
-      <DonutChart voted={stat.voted} total={stat.total} size={104} state={state} />
+      <DonutChart voted={stat.voted} total={stat.total} size={177} state={state} />
       {barPct !== null && (
-        <div style={{ width: "80%", height: "3px", background: "rgba(40,48,68,0.9)", borderRadius: "2px", overflow: "hidden" }}>
-          <div style={{ width: `${barPct}%`, height: "100%", background: barColor, borderRadius: "2px", transition: "width 0.8s ease", boxShadow: `0 0 6px ${barColor}` }} />
+        <div style={{ width: "80%", height: "5px", background: "rgba(40,48,68,0.9)", borderRadius: "3px", overflow: "hidden" }}>
+          <div style={{ width: `${barPct}%`, height: "100%", background: barColor, borderRadius: "3px", transition: "width 0.8s ease", boxShadow: `0 0 8px ${barColor}` }} />
         </div>
       )}
       <p style={{
-        fontSize: "10px", fontWeight: 600, color: M.silver,
-        textAlign: "center", lineHeight: 1.35,
-        display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden",
+        fontSize: "26px", fontWeight: 700, color: M.silver,
+        textAlign: "center", lineHeight: 1.3,
+        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+        width: "100%",
       }}>
-        {stat.group}
+        {trimGroupName(stat.group)}
       </p>
       {stat.total > 0 && (
-        <p style={{ fontSize: "9px", color: M.silverFaint }}>
+        <p style={{ fontSize: "15px", color: "#ffffff", fontWeight: 600 }}>
           未 {Math.max(0, stat.total - stat.voted)} 人
         </p>
       )}
@@ -184,7 +191,7 @@ function GroupCard({ stat }: { stat: GroupStat }) {
 interface FeedItem {
   id:    string;
   group: string;
-  emp:   string;   // マスク済み社員番号
+  emp:   string;
   time:  string;
 }
 
@@ -195,7 +202,7 @@ export default function DashboardPage() {
   const [countdown,  setCountdown]  = useState(REFRESH_SEC);
   const [loading,    setLoading]    = useState(true);
   const [tick,       setTick]       = useState(0);
-  const [audioReady, setAudioReady] = useState(false); // オートプレイ解放済み
+  // (audioReady は使わない: 手動再生のみ)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const cdRef    = useRef<ReturnType<typeof setInterval> | null>(null);
   const tickRef  = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -206,10 +213,11 @@ export default function DashboardPage() {
   const [feedItems,   setFeedItems]   = useState<FeedItem[]>([]);
   const feedQueueRef  = useRef<FeedItem[]>([]);
   const seenIdsRef    = useRef<Set<string>>(new Set());
-  const dripTimerRef  = useRef<ReturnType<typeof setInterval> | null>(null);
-  const isFirstFetch  = useRef(true);
+  const dripTimerRef    = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isFirstFetch    = useRef(true);
+  const feedContainerRef = useRef<HTMLDivElement>(null);
 
-  // ── サウンド初期化 & 自動再生 ─────────────────────────────────────────────
+  // ── サウンド初期化（プリロードのみ・自動再生なし） ──────────────────────
   useEffect(() => {
     DASH_SOUNDS.forEach(({ id, src, loop }) => {
       const a = new Audio(src);
@@ -218,36 +226,7 @@ export default function DashboardPage() {
       a.volume  = 0.85;
       audioRefs.current.set(id, a);
     });
-
-    const startAll = () => {
-      let started = false;
-      audioRefs.current.forEach((a, id) => {
-        a.currentTime = 0;
-        a.play().then(() => {
-          setPlaying((p) => new Set(p).add(id));
-          started = true;
-        }).catch(() => {});
-      });
-      if (started) setAudioReady(true);
-    };
-
-    // 500ms 後に自動再生を試みる
-    const tryTimer = setTimeout(() => {
-      audioRefs.current.forEach((a, id) => {
-        a.currentTime = 0;
-        a.play().then(() => {
-          setPlaying((p) => new Set(p).add(id));
-          setAudioReady(true);
-        }).catch(() => {
-          // ブラウザがブロック → 最初のクリックで解放
-          document.addEventListener("click", startAll, { once: true });
-        });
-      });
-    }, 500);
-
     return () => {
-      clearTimeout(tryTimer);
-      document.removeEventListener("click", startAll);
       audioRefs.current.forEach((a) => { a.pause(); a.src = ""; });
     };
   }, []);
@@ -262,7 +241,6 @@ export default function DashboardPage() {
       a.currentTime = 0;
       a.play().catch(() => {});
       setPlaying((p) => new Set(p).add(id));
-      setAudioReady(true);
     }
   };
 
@@ -289,14 +267,10 @@ export default function DashboardPage() {
       for (const v of allVotes) {
         if (!seenIdsRef.current.has(v.id)) {
           seenIdsRef.current.add(v.id);
-          const emp = v.employeeNumber;
-          const masked = emp.length > 4
-            ? "*".repeat(emp.length - 4) + emp.slice(-4)
-            : "*".repeat(emp.length);
           newItems.push({
             id:    v.id,
             group: v.groupName || "未設定",
-            emp:   masked,
+            emp:   v.employeeNumber,
             time:  new Date(v.timestamp).toLocaleTimeString("ja-JP", {
               hour: "2-digit", minute: "2-digit", second: "2-digit",
             }),
@@ -340,13 +314,22 @@ export default function DashboardPage() {
     timerRef.current  = setInterval(() => { fetchData(); setCountdown(REFRESH_SEC); }, REFRESH_SEC * 1000);
     cdRef.current     = setInterval(() => setCountdown((v) => (v <= 1 ? REFRESH_SEC : v - 1)), 1000);
     tickRef.current   = setInterval(() => setTick((t) => t + 1), 1000);
-    // ドリップタイマー: 750ms ごとにキューから1件ずつ表示
+    // ドリップタイマー: キュー量に応じて速度調整（最速150ms / 通常600ms）
     dripTimerRef.current = setInterval(() => {
-      if (feedQueueRef.current.length > 0) {
-        const item = feedQueueRef.current.shift()!;
-        setFeedItems((prev) => [item, ...prev].slice(0, 35));
+      const qLen = feedQueueRef.current.length;
+      if (qLen === 0) return;
+      // キューが多いほど一度に多く流す
+      const batch = qLen > 20 ? 4 : qLen > 8 ? 2 : 1;
+      const newBatch: FeedItem[] = [];
+      for (let i = 0; i < batch; i++) {
+        const item = feedQueueRef.current.shift();
+        if (!item) break;
+        newBatch.push(item);
       }
-    }, 750);
+      if (newBatch.length > 0) {
+        setFeedItems((prev) => [...newBatch.reverse(), ...prev].slice(0, 60));
+      }
+    }, 400);
     return () => {
       if (timerRef.current)  clearInterval(timerRef.current);
       if (cdRef.current)     clearInterval(cdRef.current);
@@ -354,6 +337,7 @@ export default function DashboardPage() {
       if (dripTimerRef.current) clearInterval(dripTimerRef.current);
     };
   }, [fetchData]);
+
 
   void tick;
   const timeLeft    = data?.deadline ? calcTimeLeft(data.deadline) : null;
@@ -369,7 +353,8 @@ export default function DashboardPage() {
 
   return (
     <main style={{
-      minHeight: "100vh",
+      height: "100vh",
+      overflow: "hidden",
       background: M.bg,
       backgroundImage: `
         ${M.bgRadial},
@@ -405,7 +390,7 @@ export default function DashboardPage() {
             ← 管理画面
           </button>
           <div style={{ width: "1px", height: "22px", background: "rgba(180,195,230,0.15)" }} />
-          <h1 style={{ fontSize: "14px", fontWeight: 700, color: M.silver, letterSpacing: "0.08em" }}>
+          <h1 style={{ fontSize: "28px", fontWeight: 700, color: M.silver, letterSpacing: "0.08em" }}>
             📊 投票 ダッシュボード
           </h1>
         </div>
@@ -445,17 +430,6 @@ export default function DashboardPage() {
 
         {/* 右 */}
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          {/* オートプレイ解放前のヒント */}
-          {!audioReady && (
-            <span style={{
-              fontSize: "9px", color: "rgba(96,165,250,0.4)",
-              border: "1px solid rgba(96,165,250,0.15)",
-              borderRadius: "6px", padding: "3px 8px",
-              animation: "softPulse 2s ease-in-out infinite",
-            }}>
-              ♪ クリックで音楽開始
-            </span>
-          )}
           {data && <span style={{ fontSize: "9px", color: M.silverFaint }}>更新 {data.lastUpdated}</span>}
           {/* 更新カウンタ */}
           <div style={{
@@ -501,21 +475,24 @@ export default function DashboardPage() {
       </header>
 
       {/* ══ BODY ═════════════════════════════════════════════════════════════ */}
-      <div style={{ flex: 1, padding: "18px 24px", maxWidth: "1600px", width: "100%", margin: "0 auto", boxSizing: "border-box" as const }}>
+      <div style={{ flex: 1, overflow: "hidden", padding: "14px 20px", maxWidth: "1920px", width: "100%", margin: "0 auto", boxSizing: "border-box" as const, display: "flex", flexDirection: "column" }}>
         {loading ? (
-          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "60vh" }}>
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", flex: 1 }}>
             <div style={{ width: "40px", height: "40px", border: `3px solid rgba(180,195,230,0.15)`, borderTop: `3px solid ${M.accent}`, borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
           </div>
         ) : data ? (
-          <div style={{ display: "grid", gridTemplateColumns: "280px 1fr 260px", gap: "16px", alignItems: "start" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "280px 1fr 260px", gap: "14px", flex: 1, overflow: "hidden",
+            /* 左列のみ自然高さ、中・右列はフル高さにするためgridRowsで制御 */
+            gridTemplateRows: "1fr",
+          }}>
 
             {/* ── 左: 全体 ── */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "14px", alignSelf: "start", overflow: "visible" }}>
 
               {/* 全体カード */}
               <div style={{
                 background: M.panelBg, border: `1px solid ${M.cardBorder}`,
-                borderRadius: "18px", padding: "20px 16px",
+                borderRadius: "18px", padding: "22px 20px",
                 boxShadow: M.cardGlow,
                 position: "relative", overflow: "hidden",
               }}>
@@ -528,34 +505,34 @@ export default function DashboardPage() {
                   animation: "shimmerSweep 4s ease-in-out infinite",
                   pointerEvents: "none",
                 }} />
-                <p style={{ fontSize: "9px", fontWeight: 700, color: M.silverFaint, letterSpacing: "0.14em", marginBottom: "14px", position: "relative" }}>
+                <p style={{ fontSize: "18px", fontWeight: 700, color: "#ffffff", letterSpacing: "0.14em", marginBottom: "20px", position: "relative" }}>
                   ▌ 全体の投票状況
                 </p>
-                <div style={{ display: "flex", justifyContent: "center", marginBottom: "16px", position: "relative" }}>
+                <div style={{ display: "flex", justifyContent: "center", marginBottom: "20px", position: "relative" }}>
                   <DonutChart voted={data.overall.voted} total={data.overall.total} size={148} state={overallState} />
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", position: "relative" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", position: "relative" }}>
                   {/* 投票済み */}
                   <div style={{
                     background: "rgba(96,165,250,0.07)", border: "1px solid rgba(96,165,250,0.16)",
-                    borderRadius: "10px", padding: "10px 10px", textAlign: "center",
+                    borderRadius: "12px", padding: "14px 10px", textAlign: "center",
                   }}>
-                    <p style={{ fontSize: "8px", color: M.silverFaint, marginBottom: "4px", letterSpacing: "0.08em" }}>投票済み</p>
+                    <p style={{ fontSize: "9px", color: M.silverFaint, marginBottom: "6px", letterSpacing: "0.08em" }}>投票済み</p>
                     <p style={{ fontSize: "28px", fontWeight: 800, color: M.accent, lineHeight: 1, textShadow: M.accentGlow }}>
                       {data.overall.voted}
                     </p>
-                    <p style={{ fontSize: "8px", color: M.silverFaint, marginTop: "3px" }}>人</p>
+                    <p style={{ fontSize: "9px", color: M.silverFaint, marginTop: "5px" }}>人</p>
                   </div>
                   {data.overall.total > 0 ? (
                     <div style={{
                       background: "rgba(248,113,113,0.07)", border: "1px solid rgba(248,113,113,0.16)",
-                      borderRadius: "10px", padding: "10px 10px", textAlign: "center",
+                      borderRadius: "12px", padding: "14px 10px", textAlign: "center",
                     }}>
-                      <p style={{ fontSize: "8px", color: M.silverFaint, marginBottom: "4px", letterSpacing: "0.08em" }}>未投票</p>
+                      <p style={{ fontSize: "9px", color: M.silverFaint, marginBottom: "6px", letterSpacing: "0.08em" }}>未投票</p>
                       <p style={{ fontSize: "28px", fontWeight: 800, color: M.red, lineHeight: 1, textShadow: M.redGlow }}>
                         {Math.max(0, data.overall.total - data.overall.voted)}
                       </p>
-                      <p style={{ fontSize: "8px", color: M.silverFaint, marginTop: "3px" }}>人</p>
+                      <p style={{ fontSize: "9px", color: M.silverFaint, marginTop: "5px" }}>人</p>
                     </div>
                   ) : (
                     <div style={{
@@ -568,9 +545,9 @@ export default function DashboardPage() {
                   )}
                 </div>
                 {data.overall.total > 0 && (
-                  <div style={{ marginTop: "12px", position: "relative" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "5px" }}>
-                      <span style={{ fontSize: "9px", color: M.silverFaint }}>参加 {data.overall.total} 人</span>
+                  <div style={{ marginTop: "18px", position: "relative" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "7px" }}>
+                      <span style={{ fontSize: "10px", color: M.silverFaint }}>参加 {data.overall.total} 人</span>
                       {overallPct !== null && (
                         <span style={{ fontSize: "9px", fontWeight: 700, color: overallState === "complete" ? M.green : overallState === "urgent" ? M.red : M.accent }}>
                           {overallPct}%
@@ -592,27 +569,27 @@ export default function DashboardPage() {
               {/* 凡例カード */}
               <div style={{
                 background: M.cardBg, border: `1px solid ${M.cardBorder}`,
-                borderRadius: "12px", padding: "12px 14px",
+                borderRadius: "14px", padding: "16px 20px",
                 boxShadow: "0 2px 12px rgba(0,0,0,0.4)",
                 position: "relative", overflow: "hidden",
               }}>
                 <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "1px", background: M.cardHighlight }} />
-                <p style={{ fontSize: "8px", color: M.silverFaint, letterSpacing: "0.12em", marginBottom: "9px" }}>凡例</p>
+                <p style={{ fontSize: "10px", color: M.silverFaint, letterSpacing: "0.12em", marginBottom: "12px" }}>凡例</p>
                 {[
                   { color: M.accent, label: "投票進行中" },
                   { color: M.green,  label: "投票完了 (100%)" },
                   { color: M.red,    label: "投票率 50% 未満" },
                 ].map(({ color, label }) => (
-                  <div key={label} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
-                    <div style={{ width: "9px", height: "9px", borderRadius: "50%", background: color, boxShadow: `0 0 7px ${color}`, flexShrink: 0 }} />
-                    <span style={{ fontSize: "10px", color: M.silverDim }}>{label}</span>
+                  <div key={label} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
+                    <div style={{ width: "11px", height: "11px", borderRadius: "50%", background: color, boxShadow: `0 0 7px ${color}`, flexShrink: 0 }} />
+                    <span style={{ fontSize: "12px", color: M.silverDim }}>{label}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* ── 右: 班別 ── */}
-            <div>
+            {/* ── 中央: 班別 ── */}
+            <div style={{ overflow: "hidden", display: "flex", flexDirection: "column", minHeight: 0 }}>
               {data.groups.filter((s) => s.total > 0).length > 0 ? (
                 <>
                   <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
@@ -621,8 +598,12 @@ export default function DashboardPage() {
                   </div>
                   <div style={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(auto-fill, minmax(148px, 1fr))",
-                    gap: "11px",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(252px, 1fr))",
+                    gap: "17px",
+                    overflowY: "auto",
+                    flex: 1,
+                    alignContent: "start",
+                    scrollbarWidth: "none",
                   }}>
                     {data.groups.filter((s) => s.total > 0).map((s) => <GroupCard key={s.group} stat={s} />)}
                   </div>
@@ -630,7 +611,7 @@ export default function DashboardPage() {
               ) : (
                 <div style={{
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  height: "300px", background: M.panelBg,
+                  height: "200px", background: M.panelBg,
                   border: `1px solid ${M.cardBorder}`, borderRadius: "18px",
                   color: M.silverFaint, fontSize: "13px",
                 }}>
@@ -645,7 +626,7 @@ export default function DashboardPage() {
               borderRadius: "18px", overflow: "hidden",
               boxShadow: M.cardGlow, position: "relative",
               display: "flex", flexDirection: "column",
-              maxHeight: "calc(100vh - 160px)",
+              minHeight: 0,
             }}>
               {/* shimmer top line */}
               <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "1px", background: M.topLine }} />
@@ -671,49 +652,54 @@ export default function DashboardPage() {
                   {feedItems.length} 件
                 </span>
               </div>
-              {/* フィードリスト */}
-              <div style={{
-                flex: 1, overflowY: "auto", overflowX: "hidden",
-                padding: "6px 0",
-                scrollbarWidth: "none",
-              }}>
+              {/* フィードリスト（下追加・compact） */}
+              <div
+                ref={feedContainerRef}
+                style={{
+                  flex: 1, overflowY: "auto", overflowX: "hidden",
+                  scrollbarWidth: "none",
+                }}
+              >
                 {feedItems.length === 0 ? (
-                  <div style={{ padding: "24px 14px", textAlign: "center", color: M.silverFaint, fontSize: "11px" }}>
+                  <div style={{ padding: "24px 10px", textAlign: "center", color: M.silverFaint, fontSize: "11px" }}>
                     投票待機中...
                   </div>
                 ) : (
-                  feedItems.map((item, i) => (
-                    <div key={item.id} style={{
-                      padding: "7px 14px",
-                      borderBottom: `1px solid rgba(180,195,230,0.05)`,
-                      display: "flex", alignItems: "center", gap: "8px",
-                      animation: i === 0 ? "feedSlideIn 0.4s ease-out" : "none",
-                      background: i === 0 ? "rgba(52,211,153,0.04)" : "transparent",
-                      transition: "background 1s",
-                    }}>
-                      {/* チェックアイコン */}
-                      <span style={{
-                        fontSize: "9px", color: "#34d399",
-                        textShadow: "0 0 6px #34d399", flexShrink: 0,
-                      }}>✓</span>
-                      {/* 内容 */}
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{
-                          fontSize: "11px", fontWeight: 600, color: M.silver,
-                          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                  <div>
+                    {feedItems.map((item, i) => {
+                      const isNewest = i === 0;
+                      return (
+                        <div key={item.id} style={{
+                          padding: "3px 10px",
+                          display: "flex", alignItems: "center", gap: "6px",
+                          animation: isNewest ? "feedGlow 1.5s ease-out forwards, feedSlideIn 0.3s ease-out" : "none",
                         }}>
-                          {item.group}
+                          {/* ✓ */}
+                          <span style={{ fontSize: "8px", color: "#34d399", flexShrink: 0, lineHeight: 1 }}>✓</span>
+                          {/* 組名 */}
+                          <span style={{
+                            fontSize: "10px", fontWeight: 600, color: M.silver,
+                            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                            maxWidth: "136px", flexShrink: 0,
+                          }}>
+                            {item.group}
+                          </span>
+                          {/* 社員番号 */}
+                          <span style={{
+                            fontSize: "10px", color: "#60a5fa",
+                            letterSpacing: "0.05em", whiteSpace: "nowrap",
+                            flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis",
+                          }}>
+                            {item.emp}
+                          </span>
+                          {/* 時刻 */}
+                          <span style={{ fontSize: "7px", color: "rgba(160,175,210,0.22)", flexShrink: 0 }}>
+                            {item.time}
+                          </span>
                         </div>
-                        <div style={{ fontSize: "10px", color: M.silverFaint, letterSpacing: "0.04em" }}>
-                          {item.emp}
-                        </div>
-                      </div>
-                      {/* 時刻 */}
-                      <span style={{ fontSize: "8px", color: "rgba(160,175,210,0.28)", flexShrink: 0, letterSpacing: "0.03em" }}>
-                        {item.time}
-                      </span>
-                    </div>
-                  ))
+                      );
+                    })}
+                  </div>
                 )}
               </div>
             </div>
@@ -728,7 +714,8 @@ export default function DashboardPage() {
         @keyframes urgentBlink  { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
         @keyframes softPulse    { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
         @keyframes livePulse    { 0%,100% { opacity: 1; box-shadow: 0 0 8px #34d399; } 50% { opacity: 0.5; box-shadow: 0 0 3px #34d399; } }
-        @keyframes feedSlideIn  { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes feedSlideIn  { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes feedGlow     { 0% { background: rgba(52,211,153,0.22); } 60% { background: rgba(52,211,153,0.07); } 100% { background: transparent; } }
         /* スクロールバー非表示 */
         div::-webkit-scrollbar { display: none; }
       `}</style>
