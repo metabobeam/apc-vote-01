@@ -30,18 +30,8 @@ export default function SoundPalette() {
   const [open, setOpen] = useState(false);
   const [playing, setPlaying] = useState<Set<string>>(new Set());
   const [fading, setFading] = useState(false);
-  const [slideModalOpen, setSlideModalOpen] = useState(false);
   const audioRefs   = useRef<Map<string, HTMLAudioElement>>(new Map());
   const fadeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // スライドモーダルが開いているときは非表示
-  useEffect(() => {
-    const observer = new MutationObserver(() => {
-      setSlideModalOpen(document.body.classList.contains("slide-modal-open"));
-    });
-    observer.observe(document.body, { attributes: true, attributeFilter: ["class"] });
-    return () => observer.disconnect();
-  }, []);
 
   // マウント時に全音源をプリロード
   useEffect(() => {
@@ -113,32 +103,55 @@ export default function SoundPalette() {
     }, FADE_STEP);
   };
 
-  if (slideModalOpen) return null;
-
   return (
     <div
       style={{
         position: "fixed",
         right: 0,
-        top: "50%",
-        transform: "translateY(-50%)",
+        bottom: 0,
         zIndex: 9999,
         display: "flex",
-        alignItems: "flex-start",
+        flexDirection: "column-reverse",
+        alignItems: "flex-end",
         gap: 0,
       }}
     >
+      {/* トグルタブ（左上端に "S" のみ） */}
+      <button
+        onClick={() => setOpen((v) => !v)}
+        style={{
+          padding: "6px 10px",
+          background: open ? "rgba(15,17,24,0.55)" : "rgba(30,34,46,0.45)",
+          border: "1px solid rgba(160,170,190,0.2)",
+          borderBottom: "none",
+          borderRight: "none",
+          borderRadius: "8px 0 0 0",
+          color: playing.size > 0 ? "#6bcab7" : "#94a3b8",
+          fontSize: "13px",
+          fontWeight: 700,
+          cursor: "pointer",
+          boxShadow: "2px 2px 8px rgba(0,0,0,0.3)",
+          transition: "all 0.2s",
+          userSelect: "none",
+          lineHeight: 1,
+        }}
+        title={open ? "サウンドパッドを閉じる" : "サウンドパッドを開く"}
+      >
+        {playing.size > 0 ? "🔊" : "S"}
+      </button>
+
       {/* パネル本体 */}
       <div
         style={{
-          width: open ? "220px" : "0px",
+          height: open ? "auto" : "0px",
           overflow: "hidden",
-          transition: "width 0.25s ease",
+          transition: "height 0.25s ease",
           background: "rgba(15,17,24,0.97)",
           border: open ? "1px solid rgba(160,170,190,0.2)" : "none",
+          borderBottom: "none",
           borderRight: "none",
-          borderRadius: "12px 0 0 12px",
-          boxShadow: open ? "-4px 0 24px rgba(0,0,0,0.4)" : "none",
+          borderRadius: "12px 0 0 0",
+          boxShadow: open ? "4px 4px 24px rgba(0,0,0,0.3)" : "none",
         }}
       >
         <div style={{ width: "220px", padding: "12px 10px" }}>
@@ -237,41 +250,6 @@ export default function SoundPalette() {
           </div>
         </div>
       </div>
-
-      {/* トグルタブ */}
-      <button
-        onClick={() => setOpen((v) => !v)}
-        style={{
-          writingMode: "vertical-rl",
-          padding: "14px 8px",
-          background: open ? "rgba(15,17,24,0.97)" : "rgba(30,34,46,0.92)",
-          border: "1px solid rgba(160,170,190,0.2)",
-          borderLeft: open ? "1px solid rgba(15,17,24,0.97)" : "1px solid rgba(160,170,190,0.2)",
-          borderRadius: open ? "0" : "8px 0 0 8px",
-          color: "#94a3b8",
-          fontSize: "11px",
-          fontWeight: 700,
-          letterSpacing: "0.12em",
-          cursor: "pointer",
-          boxShadow: "-2px 0 12px rgba(0,0,0,0.3)",
-          transition: "all 0.2s",
-          userSelect: "none",
-          display: "flex",
-          alignItems: "center",
-          gap: "6px",
-        }}
-        title={open ? "サウンドパッドを閉じる" : "サウンドパッドを開く"}
-      >
-        <span style={{ writingMode: "horizontal-tb", fontSize: "14px" }}>
-          {playing.size > 0 ? "🔊" : "🎵"}
-        </span>
-        <span>サウンド</span>
-        {playing.size > 0 && (
-          <span style={{ writingMode: "horizontal-tb", fontSize: "9px", background: "rgba(99,202,183,0.2)", color: "#6bcab7", borderRadius: "4px", padding: "1px 4px" }}>
-            {playing.size}
-          </span>
-        )}
-      </button>
     </div>
   );
 }
